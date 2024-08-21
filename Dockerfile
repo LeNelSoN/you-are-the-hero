@@ -1,5 +1,11 @@
-FROM openjdk:17-jdk-slim
+# Étape 1 : Construire le projet Maven
+FROM maven:3.8.1-openjdk-17 AS build
+COPY . /app
 WORKDIR /app
-COPY target/you-are-the-hero-0.0.1-SNAPSHOT.jar app.jar
+RUN mvn clean package -DskipTests
+
+FROM openjdk:17-slim
+WORKDIR /app
+COPY --from=build /app/target/you-are-the-hero-0.0.1-SNAPSHOT.jar /app/app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "/app/app.jar"]
