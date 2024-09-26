@@ -1,3 +1,5 @@
+![Couverture](https://i.imgur.com/PhHGK8G.jpg)
+
 # L'API Dont Vous Êtes le Héros
 
 ## Description
