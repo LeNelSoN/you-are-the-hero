@@ -8,8 +8,8 @@ Thank you for considering contributing to our project! We welcome contributions 
 
 2. **Clone Your Fork**: Clone your forked repository to your local machine:
    ```bash
-   git clone https://github.com/your-username/l-api-dont-vous-etes-le-heros.git
-   cd l-api-dont-vous-etes-le-heros
+   git clone https://github.com/your-username/your-are-the-hero.git
+   cd your-are-the-hero
    ```
    
 3. **Create a Branch**: Create a new branch for your feature or bug fix:
