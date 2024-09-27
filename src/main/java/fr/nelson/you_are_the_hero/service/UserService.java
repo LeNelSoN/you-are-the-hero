@@ -34,8 +34,13 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
-    public void saveUser(AppUser appUser){
+    public AppUser saveUser(AppUser appUser) throws Exception {
+        AppUser existingUser = appUserRepository.findByUsername(appUser.getUsername());
+        if (existingUser != null) {
+            throw new Exception("user allready exist");
+        }
         appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
-        appUserRepository.save(appUser);
+        return appUserRepository.save(appUser);
     }
+
 }

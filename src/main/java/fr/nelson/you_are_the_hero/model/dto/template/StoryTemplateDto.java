@@ -1,4 +1,4 @@
-package fr.nelson.you_are_the_hero.dto.template;
+package fr.nelson.you_are_the_hero.model.dto.template;
 
 import org.springframework.hateoas.RepresentationModel;
 

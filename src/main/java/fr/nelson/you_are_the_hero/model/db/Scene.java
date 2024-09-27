@@ -1,24 +1,31 @@
-package fr.nelson.you_are_the_hero.model;
+package fr.nelson.you_are_the_hero.model.db;
 
+import fr.nelson.you_are_the_hero.model.Choice;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Document
 public class Scene {
 
     @Id
     private String id;
+    private String previousSceneId;
     private String description;
-    private List<Choice> choices;
+    private List<Choice> choices = new ArrayList<>();
+
+    public Scene() {
+    }
 
     public Scene(String description) {
         this.description = description;
-        this.choices = new ArrayList<>();
+    }
+
+    public Scene(String description, String previousSceneId) {
+        this.description = description;
+        this.previousSceneId = previousSceneId;
     }
 
     public String getId() {
@@ -27,6 +34,14 @@ public class Scene {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getPreviousSceneId() {
+        return previousSceneId;
+    }
+
+    public void setPreviousSceneId(String previousSceneId) {
+        this.previousSceneId = previousSceneId;
     }
 
     public String getDescription() {

@@ -1,10 +1,7 @@
-package fr.nelson.you_are_the_hero.model;
+package fr.nelson.you_are_the_hero.model.db;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Document(collection = "stories")
 public class Story {
@@ -12,7 +9,7 @@ public class Story {
     private String id;
     private String title;
     private String description;
-    private List<Scene> scenes = new ArrayList<>();
+    private String firstSceneId;
 
     public Story() {
     }
@@ -41,15 +38,12 @@ public class Story {
         this.description = description;
     }
 
-    public List<Scene> getScenes() {
-        return scenes;
+    public String getFirstSceneId() {
+        return firstSceneId;
     }
 
-    public void setScenes(List<Scene> scenes) {
-        this.scenes = scenes;
+    public void setFirstSceneId(String firstSceneId) {
+        this.firstSceneId = firstSceneId;
     }
 
-    public void addScenes(Scene scene){
-        this.scenes.add(scene);
-    }
 }

@@ -1,4 +1,4 @@
-package fr.nelson.you_are_the_hero.dto;
+package fr.nelson.you_are_the_hero.model.dto;
 
 import fr.nelson.you_are_the_hero.model.Choice;
 import org.springframework.hateoas.RepresentationModel;

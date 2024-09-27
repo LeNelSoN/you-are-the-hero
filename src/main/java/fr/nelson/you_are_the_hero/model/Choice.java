@@ -4,6 +4,9 @@ public class Choice {
     private String description;
     private String nextSceneId;
 
+    public Choice() {
+    }
+
     public Choice(String description, String nextSceneId) {
         this.description = description;
         this.nextSceneId = nextSceneId;
