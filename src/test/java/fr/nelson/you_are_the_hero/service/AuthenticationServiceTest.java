@@ -33,22 +33,22 @@ public class AuthenticationServiceTest {
 
     @Test
     public void testAuthenticateUserWithNullUsername_throwBRE() {
-        //Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser(null, "123"));
+        Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser(null, "123"));
     }
 
     @Test
     public void testAuthenticateUserWithEmptyUsername_throwBRE() {
-        //Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser("", "123"));
+        Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser("", "123"));
     }
 
     @Test
     public void testAuthenticateUserWithNullPassword_throwBRE() {
-        //Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser("user", null));
+        Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser("user", null));
     }
 
     @Test
     public void testAuthenticateUserWithEmptyPassword_throwBRE() {
-        //Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser("user", ""));
+        Assertions.assertThrows(BadRequestException.class, () -> this.authenticationService.authenticateUser("user", ""));
     }
 
     @Test
