@@ -1,6 +1,8 @@
 package fr.nelson.you_are_the_hero.service;
 
 import fr.nelson.you_are_the_hero.utility.JwtUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +26,9 @@ public class AuthenticationService {
     private JwtUtil jwtUtil;
 
     public String authenticateUser(String username, String password) throws Exception {
+        if(StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {
+            throw new BadRequestException("USERNAME_OR_PASSWORD_CAN_NOT_BE_NULL");
+        }
         try {
 
             authenticationManager.authenticate(

@@ -27,6 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
+		<commons-lang3.version>3.12.0</commons-lang3.version>
 		<java.version>17</java.version>
 		<jjwt.version>0.11.5</jjwt.version>
 	</properties>
@@ -77,6 +78,11 @@
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if you prefer -->
 			<version>${jjwt.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commons-lang3.version}</version>
 		</dependency>
 	</dependencies>
 	<build>
