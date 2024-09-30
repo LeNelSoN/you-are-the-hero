@@ -1,0 +1,16 @@
+# Ignore all files in the .idea directory
+.idea/
+
+# Ignore all compiled Java classes
+*.class
+
+# Ignore target directory (Maven build output)
+target/
+
+# Ignore Maven specific files
+pom.properties
+*.jar
+*.xml
+
+# Ignore Surefire reports
+surefire-reports/
