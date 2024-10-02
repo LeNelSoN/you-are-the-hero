@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
-          distribution: 'zulu'
+          distribution: 'temurin'
 
       - name: Run tests
         run: mvn test
@@ -38,10 +38,10 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
-          distribution: 'zulu'
+          distribution: 'temurin'
 
       - name: Build project
-        run: mvn clean install
+        run: mvn clean install -DskipTests
 
   docker:
     runs-on: ubuntu-latest
