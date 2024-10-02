@@ -108,7 +108,7 @@ public class AuthenticationServiceTest {
         refreshToken.setAppUser(appUser);
         refreshToken.setExpireAt(Instant.now().plusMillis(10000));
 
-        when(refreshTokenRepository.findByToken("valid_refresh_token")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.getRefreshToken("valid_refresh_token")).thenReturn(refreshToken);
         when(userService.loadUserByUsername("user")).thenReturn(userDetails);
         when(refreshTokenService.createRefreshToken("user")).thenReturn("new_refresh_token");
         when(jwtUtil.generateToken("user")).thenReturn("new_access_token");
@@ -123,8 +123,8 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    public void refreshAccessToken_InvalidToken() {
-        when(refreshTokenRepository.findByToken("invalid_refresh_token")).thenReturn(Optional.empty());
+    public void refreshAccessToken_InvalidToken() throws InvalidTokenException {
+        when(refreshTokenService.getRefreshToken("invalid_refresh_token")).thenThrow(new InvalidTokenException("Invalid refresh token"));
 
         Assertions.assertThrows(InvalidTokenException.class, () -> {
             authenticationService.refreshAccessToken("invalid_refresh_token");
@@ -132,7 +132,7 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    public void refreshAccessToken_ExpiredToken() {
+    public void refreshAccessToken_ExpiredToken() throws InvalidTokenException {
         AppUser appUser = new AppUser();
         appUser.setUsername("user");
 
@@ -141,7 +141,7 @@ public class AuthenticationServiceTest {
         refreshToken.setAppUser(appUser);
         refreshToken.setExpireAt(Instant.now().minusMillis(10000));
 
-        when(refreshTokenRepository.findByToken("valid_refresh_token")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.getRefreshToken("valid_refresh_token")).thenReturn(refreshToken);
 
         Assertions.assertThrows(TokenExpiredException.class, () -> {
             authenticationService.refreshAccessToken("valid_refresh_token");
@@ -151,7 +151,7 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    public void refreshAccessToken_UserNotFound() {
+    public void refreshAccessToken_UserNotFound() throws InvalidTokenException {
         AppUser appUser = new AppUser();
         appUser.setUsername("user");
 
@@ -160,7 +160,7 @@ public class AuthenticationServiceTest {
         refreshToken.setAppUser(appUser);
         refreshToken.setExpireAt(Instant.now().plusMillis(10000));
 
-        when(refreshTokenRepository.findByToken("valid_refresh_token")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.getRefreshToken("valid_refresh_token")).thenReturn(refreshToken);
         when(userService.loadUserByUsername("user")).thenThrow(new UsernameNotFoundException("User not found"));
 
         Assertions.assertThrows(UsernameNotFoundException.class, () -> {
