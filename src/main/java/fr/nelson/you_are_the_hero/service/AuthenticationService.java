@@ -64,8 +64,7 @@ public class AuthenticationService {
     }
 
     public AuthResponseDto refreshAccessToken(String refreshToken) throws InvalidTokenException, TokenExpiredException {
-        RefreshToken storedRefreshToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
+        RefreshToken storedRefreshToken = refreshTokenService.getRefreshToken(refreshToken);
 
         if (storedRefreshToken.getExpireAt().isBefore(Instant.now())) {
             refreshTokenService.deleteRefreshToken(storedRefreshToken.getToken());
@@ -83,4 +82,5 @@ public class AuthenticationService {
 
         return new AuthResponseDto(newAccessToken, newRefreshToken);
     }
+
 }
