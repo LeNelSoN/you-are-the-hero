@@ -18,21 +18,22 @@ import java.util.function.Function;
 public class JwtUtil {
 
     @Value("${jwt.secret}")
-    private String SECRET_KEY;
-    private final int VALIDITY = 1000 * 60 * 60 * 10;
+    private String secretKey;
+    @Value("${jwt.validity}")
+    private int accessTokenValidity;
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+        return createToken(claims, username, accessTokenValidity);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    private String createToken(Map<String, Object> claims, String subject, int tokenValidity) {
         return Jwts.builder()
-                .claims(claims)
-                .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + VALIDITY))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidity))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }
 
@@ -47,7 +48,7 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
+                .verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
                 .build().parseSignedClaims(token)
                 .getPayload();
     }
