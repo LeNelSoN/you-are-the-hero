@@ -1,16 +1,34 @@
-# Ignore all files in the .idea directory
-.idea/
-
-# Ignore all compiled Java classes
-*.class
-
-# Ignore target directory (Maven build output)
+HELP.md
 target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.cz.json
 
-# Ignore Maven specific files
-pom.properties
-*.jar
-*.xml
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-# Ignore Surefire reports
-surefire-reports/
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
