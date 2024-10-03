@@ -72,12 +72,9 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody AuthRequestDto authRequestDto) {
-        AppUser newUser = new AppUser();
-        newUser.setUsername(authRequestDto.getUsername());
-        newUser.setPassword(authRequestDto.getPassword());
-        newUser.setRole("USER");
+
         try{
-            AppUser registredUser = userService.saveUser(newUser);
+            AppUser registredUser = userService.saveUser(authRequestDto);
             UserDto userDto = new UserDto(registredUser.getUsername());
             userDto.add(WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
