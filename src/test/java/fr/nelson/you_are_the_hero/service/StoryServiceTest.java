@@ -167,5 +167,22 @@ public class StoryServiceTest {
         // Vérif
         assertEquals("Story not found", exception.getMessage());
     }
+
+    @Test
+    public void testAddSceneToStory_WrongUser() {
+        // Arrange
+        String storyId = "storyNotFound";
+        Scene scene = new Scene();
+
+        when(storyRepository.findByIdAndCreatedBy(Mockito.anyString(), Mockito.anyString())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        StoryNotFoundException exception = assertThrows(StoryNotFoundException.class, () -> {
+            storyService.addSceneToStory(storyId, scene, "username");
+        });
+
+        // Vérif
+        assertEquals("Story not found", exception.getMessage());
+    }
 }
 
