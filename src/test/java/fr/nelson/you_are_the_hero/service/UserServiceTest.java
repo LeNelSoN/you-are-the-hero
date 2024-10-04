@@ -2,6 +2,7 @@ package fr.nelson.you_are_the_hero.service;
 
 import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
+import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
 import org.junit.jupiter.api.Test;
@@ -10,10 +11,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.junit.jupiter.api.Assertions;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,5 +65,52 @@ public class UserServiceTest {
         Assertions.assertThrows(UserAllreadyExistException.class, () -> this.userService.saveUser(authRequestDto));
     }
 
-}
+    @Test
+    public void testLoadUserByUsername_UserExists() {
+        AppUser appUser = new AppUser();
+        appUser.setUsername("jean neige");
+        appUser.setPassword("Ygrid");
+        appUser.setRole(Role.PLAYER);
 
+        when(appUserRepository.findByUsername("jean neige")).thenReturn(appUser);
+
+        UserDetails userDetails = userService.loadUserByUsername("jean neige");
+
+        assertNotNull(userDetails);
+        assertEquals("jean neige", userDetails.getUsername());
+        assertEquals("Ygrid", userDetails.getPassword());
+    }
+
+    @Test
+    public void testLoadUserByUsername_UserNotFound() {
+        when(appUserRepository.findByUsername("unknown-username")).thenReturn(null);
+
+        assertThrows(UsernameNotFoundException.class, () -> {
+            userService.loadUserByUsername("unknown-username");
+        });
+    }
+
+    @Test
+    public void testFindAppUserByUsername_UserExists() {
+        AppUser appUser = new AppUser();
+        appUser.setUsername("jean neige");
+        appUser.setPassword("Ygrid");
+        appUser.setRole(Role.PLAYER);
+
+        when(appUserRepository.findByUsername("jean neige")).thenReturn(appUser);
+
+        AppUser user = userService.findAppUserByUsername("jean neige");
+
+        assertNotNull(user);
+        assertEquals("jean neige", user.getUsername());
+    }
+
+    @Test
+    public void testFindAppUserByUsername_UserNotFound() {
+        when(appUserRepository.findByUsername("unknown-username")).thenReturn(null);
+
+        AppUser foundUser = userService.findAppUserByUsername("unknown-username");
+
+        assertNull(foundUser);
+    }
+}
