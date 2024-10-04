@@ -99,8 +99,10 @@ public class UserServiceTest {
     @Test
     public void testFindAppUserByUsername_UserNotFound() {
         when(appUserRepository.findByUsername("unknown-username")).thenReturn(null);
+
         assertThrows(UsernameNotFoundException.class, () -> {
             userService.loadUserByUsername("unknown-username");
         });
+
     }
 }
