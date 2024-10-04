@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.service;
 
+import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
@@ -57,7 +58,7 @@ public class UserServiceTest {
         when(appUserRepository.existsByUsername(Mockito.anyString())).thenReturn(true);
 
         // Then
-        Assertions.assertThrows(Exception.class, () -> this.userService.saveUser(authRequestDto));
+        Assertions.assertThrows(UserAllreadyExistException.class, () -> this.userService.saveUser(authRequestDto));
     }
 
 }

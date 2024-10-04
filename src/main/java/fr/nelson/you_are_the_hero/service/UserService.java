@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.service;
 
+import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
@@ -23,11 +24,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        AppUser appUser = appUserRepository.findByUsername(username);
-
-        if(appUser == null) {
-            throw new UsernameNotFoundException("User Not Found");
-        }
+        AppUser appUser = findAppUserByUsername(username);
 
         return User.withUsername(appUser.getUsername())
                 .password(appUser.getPassword())
@@ -35,9 +32,9 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
-    public AppUser saveUser(AuthRequestDto authRequestDto) throws Exception {
+    public AppUser saveUser(AuthRequestDto authRequestDto) throws UserAllreadyExistException {
         if (appUserRepository.existsByUsername(authRequestDto.getUsername())) {
-            throw new Exception("user allready exist");
+            throw new UserAllreadyExistException("user allready exist");
         }
         AppUser newUser = new AppUser();
         newUser.setUsername(authRequestDto.getUsername());
@@ -48,7 +45,13 @@ public class UserService implements UserDetailsService {
     }
 
     public AppUser findAppUserByUsername(String username){
-        return appUserRepository.findByUsername(username);
+        AppUser appUser = appUserRepository.findByUsername(username);
+
+        if(appUser == null) {
+            throw new UsernameNotFoundException("User Not Found");
+        }
+
+        return appUser;
     }
 
 }
