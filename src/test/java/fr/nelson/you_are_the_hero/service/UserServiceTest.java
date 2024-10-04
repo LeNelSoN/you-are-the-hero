@@ -82,15 +82,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testLoadUserByUsername_UserNotFound() {
-        when(appUserRepository.findByUsername("unknown-username")).thenReturn(null);
-
-        assertThrows(UsernameNotFoundException.class, () -> {
-            userService.loadUserByUsername("unknown-username");
-        });
-    }
-
-    @Test
     public void testFindAppUserByUsername_UserExists() {
         AppUser appUser = new AppUser();
         appUser.setUsername("jean neige");
@@ -109,8 +100,8 @@ public class UserServiceTest {
     public void testFindAppUserByUsername_UserNotFound() {
         when(appUserRepository.findByUsername("unknown-username")).thenReturn(null);
 
-        AppUser foundUser = userService.findAppUserByUsername("unknown-username");
-
-        assertNull(foundUser);
+        assertThrows(UsernameNotFoundException.class, () -> {
+            userService.loadUserByUsername("unknown-username");
+        });
     }
 }
