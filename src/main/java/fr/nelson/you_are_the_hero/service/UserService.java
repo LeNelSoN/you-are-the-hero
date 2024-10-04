@@ -33,7 +33,7 @@ public class UserService implements UserDetailsService {
 
         return User.withUsername(appUser.getUsername())
                 .password(appUser.getPassword())
-                .roles(appUser.getRole())
+                .roles(appUser.getRole().name())
                 .build();
     }
 
@@ -44,7 +44,7 @@ public class UserService implements UserDetailsService {
         AppUser newUser = new AppUser();
         newUser.setUsername(authRequestDto.getUsername());
         newUser.setPassword(authRequestDto.getPassword());
-        newUser.setRole(PLAYER.name());
+        newUser.setRole(PLAYER);
         newUser.setPassword(passwordEncoder.encode(authRequestDto.getPassword()));
         return appUserRepository.save(newUser);
     }
