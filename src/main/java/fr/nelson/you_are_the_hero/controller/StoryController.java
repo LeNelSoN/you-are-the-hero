@@ -2,6 +2,7 @@ package fr.nelson.you_are_the_hero.controller;
 
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
+import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.StoryDto;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.StoryTemplateDto;
@@ -12,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -55,19 +59,24 @@ public class StoryController {
 
     }
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping
-    public ResponseEntity<MessageDto> createStory(@RequestBody Story story){
+    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        story.setCreatedBy(user.getUsername());
         Story newStory = storyService.createNewStory(story);
         MessageDto message = new MessageDto("Your story is ready, now add some scenes.");
-        message.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).addFirstSceneToStory(newStory.getId(), null)).withRel("addFirstScene").withType(HttpMethod.POST.name()));
+        message.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).addFirstSceneToStory(newStory.getId(), null, authentication)).withRel("addFirstScene").withType(HttpMethod.POST.name()));
         message.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).getFirstSceneTemplate()).withRel("getFirstSceneTemplate").withType(HttpMethod.GET.name()));
         return ResponseEntity.ok(message);
     }
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping(path = "/{storyId}/scene")
-    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene){
+    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication){
         try{
-            Story updatedStory = storyService.addSceneToStory(storyId, scene);
+            User user = (User) authentication.getPrincipal();
+            Story updatedStory = storyService.addSceneToStory(storyId, scene, user.getUsername());
             StoryDto storyDto = new StoryDto(updatedStory.getTitle(), updatedStory.getDescription());
             storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).getScene(updatedStory.getFirstSceneId())).withRel("getFirstScene").withType(HttpMethod.GET.name()));
             return ResponseEntity.ok(storyDto);

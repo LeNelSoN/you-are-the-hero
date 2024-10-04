@@ -11,6 +11,8 @@ public class Story {
     private String description;
     private String firstSceneId;
 
+    private String createdBy;
+
     public Story() {
     }
 
@@ -46,4 +48,11 @@ public class Story {
         this.firstSceneId = firstSceneId;
     }
 
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String userId) {
+        this.createdBy = userId;
+    }
 }
