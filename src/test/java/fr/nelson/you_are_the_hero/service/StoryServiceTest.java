@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
@@ -60,13 +61,14 @@ public class StoryServiceTest {
         Story story = new Story();
         story.setId(storyId);
         story.setFirstSceneId(null);
+        story.setCreatedBy("username");
 
-        when(storyRepository.findById(storyId)).thenReturn(Optional.of(story));
+        when(storyRepository.findByIdAndCreatedBy(Mockito.anyString(), Mockito.anyString())).thenReturn(Optional.of(story));
         when(sceneRepository.save(scene)).thenReturn(scene);
         when(storyRepository.save(story)).thenReturn(story);
 
         // Act
-        Story result = storyService.addSceneToStory(storyId, scene);
+        Story result = storyService.addSceneToStory(storyId, scene, "username");
 
         // Assert
         assertNotNull(result);
@@ -85,12 +87,13 @@ public class StoryServiceTest {
         Story story = new Story();
         story.setId(storyId);
         story.setFirstSceneId("existingScene");
+        story.setCreatedBy("username");
 
-        when(storyRepository.findById(storyId)).thenReturn(Optional.of(story));
+        when(storyRepository.findByIdAndCreatedBy(Mockito.anyString(), Mockito.anyString())).thenReturn(Optional.of(story));
 
         // Act & Assert
         SceneAlreadyExistsException exception = assertThrows(SceneAlreadyExistsException.class, () -> {
-            storyService.addSceneToStory(storyId, scene);
+            storyService.addSceneToStory(storyId, scene, "username");
         });
 
         // Vérif
@@ -104,11 +107,11 @@ public class StoryServiceTest {
         String storyId = "storyNotFound";
         Scene scene = new Scene();
 
-        when(storyRepository.findById(storyId)).thenReturn(Optional.empty());
+        when(storyRepository.findByIdAndCreatedBy(Mockito.anyString(), Mockito.anyString())).thenReturn(Optional.empty());
 
         // Act & Assert
         StoryNotFoundException exception = assertThrows(StoryNotFoundException.class, () -> {
-            storyService.addSceneToStory(storyId, scene);
+            storyService.addSceneToStory(storyId, scene, "username");
         });
 
         // Vérif
@@ -159,6 +162,23 @@ public class StoryServiceTest {
         // Act & Assert
         StoryNotFoundException exception = assertThrows(StoryNotFoundException.class, () -> {
             storyService.getStoryById(storyId);
+        });
+
+        // Vérif
+        assertEquals("Story not found", exception.getMessage());
+    }
+
+    @Test
+    public void testAddSceneToStory_WrongUser() {
+        // Arrange
+        String storyId = "storyNotFound";
+        Scene scene = new Scene();
+
+        when(storyRepository.findByIdAndCreatedBy(Mockito.anyString(), Mockito.anyString())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        StoryNotFoundException exception = assertThrows(StoryNotFoundException.class, () -> {
+            storyService.addSceneToStory(storyId, scene, "username");
         });
 
         // Vérif

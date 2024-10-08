@@ -25,7 +25,7 @@ public class StoryService {
         return storyRepository.save(story);
     }
 
-    public Story addSceneToStory(String storyId, Scene scene) throws SceneAlreadyExistsException, StoryNotFoundException {
+    public Story addSceneToStory(String storyId, Scene scene, String username) throws SceneAlreadyExistsException, StoryNotFoundException {
         if (storyId == null || storyId.isEmpty()) {
             throw new IllegalArgumentException("Story ID cannot be null or empty");
         }
@@ -34,7 +34,7 @@ public class StoryService {
             throw new IllegalArgumentException("Scene cannot be null");
         }
 
-        Optional<Story> possibleStory = storyRepository.findById(storyId);
+        Optional<Story> possibleStory = storyRepository.findByIdAndCreatedBy(storyId, username);
         if(possibleStory.isPresent()){
             Scene savedScene = sceneRepository.save(scene);
             Story story = possibleStory.get();
