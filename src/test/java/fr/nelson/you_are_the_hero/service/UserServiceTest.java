@@ -1,9 +1,11 @@
 package fr.nelson.you_are_the_hero.service;
 
+import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
 import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
+import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,5 +106,67 @@ public class UserServiceTest {
             userService.loadUserByUsername("unknown-username");
         });
 
+    }
+
+    @Test
+    public void testCreateAdminUser_Ok() {
+        AppUser appUser = new AppUser();
+        appUser.setUsername("jean neige");
+        appUser.setPassword("Ygrid");
+        appUser.setRole(Role.PLAYER);
+
+        UserDto userDto = new UserDto("jean neige");
+
+        when(userService.isAlreadyAnAdmin()).thenReturn(false);
+        when(appUserRepository.findByUsername("jean neige")).thenReturn(appUser);
+        when(appUserRepository.save(appUser)).thenReturn(appUser);
+
+        AppUser adminUser = userService.createAdminUser(userDto);
+
+        assertNotNull(adminUser);
+        assertEquals("jean neige", adminUser.getUsername());
+        assertEquals(Role.ADMIN, adminUser.getRole());
+
+        verify(appUserRepository).save(appUser);
+    }
+
+    @Test
+    public void testCreateAdminUser_AdminExists() {
+        UserDto userDto = new UserDto("jean neige");
+
+        when(userService.isAlreadyAnAdmin()).thenReturn(true);
+
+        assertThrows(AdminAlreadyExistException.class, () -> {
+            userService.createAdminUser(userDto);
+        });
+    }
+
+    @Test
+    public void testCreateAdminUser_WithInexistingAppUser() {
+        UserDto userDto = new UserDto("jean neige");
+
+        when(appUserRepository.findByUsername(Mockito.anyString())).thenReturn(null);
+
+        assertThrows(UsernameNotFoundException.class, () -> {
+            userService.createAdminUser(userDto);
+        });
+    }
+
+    @Test
+    public void testIsAlreadyAnAdmin_NoAdminExist() {
+        when(appUserRepository.existsByRole(Role.ADMIN)).thenReturn(false);
+
+        Boolean isAnAdmin = userService.isAlreadyAnAdmin();
+
+        assertFalse(isAnAdmin);
+    }
+
+    @Test
+    public void testIsAlreadyAnAdmin_AdminExist() {
+        when(appUserRepository.existsByRole(Role.ADMIN)).thenReturn(true);
+
+        Boolean isAnAdmin = userService.isAlreadyAnAdmin();
+
+        assertTrue(isAnAdmin);
     }
 }

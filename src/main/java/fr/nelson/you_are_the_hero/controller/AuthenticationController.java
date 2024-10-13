@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
 import fr.nelson.you_are_the_hero.exception.InvalidTokenException;
 import fr.nelson.you_are_the_hero.exception.TokenExpiredException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
@@ -113,6 +114,23 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
+        }
+
+    }
+
+    @PostMapping("/admin")
+    public ResponseEntity<?> createAdmin(@RequestBody UserDto userDto){
+        MessageDto messageDto = new MessageDto();
+        try{
+            AppUser appUser = userService.createAdminUser(userDto);
+            messageDto.setMessage(appUser.getUsername() + " is now an admin");
+            return ResponseEntity.ok(messageDto);
+        } catch (AdminAlreadyExistException e) {
+            messageDto.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(messageDto);
+        } catch (UsernameNotFoundException e) {
+            messageDto.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
         }
 
     }

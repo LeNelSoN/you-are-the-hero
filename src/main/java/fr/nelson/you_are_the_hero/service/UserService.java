@@ -1,8 +1,11 @@
 package fr.nelson.you_are_the_hero.service;
 
+import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
 import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
+import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
+import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
@@ -54,4 +57,23 @@ public class UserService implements UserDetailsService {
         return appUser;
     }
 
+    public AppUser createAdminUser(UserDto UserDto) throws AdminAlreadyExistException, UsernameNotFoundException{
+        if(isAlreadyAnAdmin()){
+            throw new AdminAlreadyExistException("Admin allready exist");
+        }
+
+        AppUser appUser = appUserRepository.findByUsername(UserDto.getUsername());
+
+        if(appUser == null) {
+            throw new UsernameNotFoundException("User Not Found");
+        }
+
+        appUser.setRole(Role.ADMIN);
+
+        return appUserRepository.save(appUser);
+    }
+
+    public boolean isAlreadyAnAdmin() {
+        return appUserRepository.existsByRole(Role.ADMIN);
+    }
 }
