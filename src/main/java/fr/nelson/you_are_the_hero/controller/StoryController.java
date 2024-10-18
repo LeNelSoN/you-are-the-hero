@@ -61,7 +61,7 @@ public class StoryController {
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping
-    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication){
+    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException {
         User user = (User) authentication.getPrincipal();
         story.setCreatedBy(user.getUsername());
         Story newStory = storyService.createNewStory(story);
@@ -73,20 +73,13 @@ public class StoryController {
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping(path = "/{storyId}/scene")
-    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication){
-        try{
+    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException {
+
             User user = (User) authentication.getPrincipal();
             Story updatedStory = storyService.addSceneToStory(storyId, scene, user.getUsername());
             StoryDto storyDto = new StoryDto(updatedStory.getTitle(), updatedStory.getDescription());
             storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).getScene(updatedStory.getFirstSceneId())).withRel("getFirstScene").withType(HttpMethod.GET.name()));
             return ResponseEntity.ok(storyDto);
-        } catch (SceneAlreadyExistsException e) {
-            return ResponseEntity.status(409).body("The first scene already exists and cannot be overwritten.");
-        } catch (StoryNotFoundException e){
-            return ResponseEntity.status(404).body("Sorry, story not found");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("An unexpected error occurred on the server. Please try again later.");
-        }
 
     }
 
