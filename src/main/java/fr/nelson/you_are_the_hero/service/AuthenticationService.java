@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -63,7 +64,7 @@ public class AuthenticationService {
         }
     }
 
-    public AuthResponseDto refreshAccessToken(String refreshToken) throws TokenExpiredException, InvalidTokenException {
+    public AuthResponseDto refreshAccessToken(String refreshToken) throws TokenExpiredException, InvalidTokenException, UsernameNotFoundException {
         RefreshToken storedRefreshToken = refreshTokenService.getRefreshToken(refreshToken);
 
         if (storedRefreshToken.getExpireAt().isBefore(Instant.now())) {
