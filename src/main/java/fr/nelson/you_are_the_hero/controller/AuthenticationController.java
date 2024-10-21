@@ -12,11 +12,15 @@ import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.UserTemplateDto;
 import fr.nelson.you_are_the_hero.service.AuthenticationService;
 import fr.nelson.you_are_the_hero.service.UserService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
@@ -133,6 +137,13 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
         }
 
+    }
+
+    @DeleteMapping("/users/{username}")
+    @PreAuthorize("hasRole('ROLE_PLAYER')")
+    public ResponseEntity<?> deleteUser(@PathVariable String username, Authentication authentication) throws BadRequestException {
+        this.userService.deleteByUsername(username, (User) authentication.getPrincipal());
+        return ResponseEntity.noContent().build();
     }
 
 }
