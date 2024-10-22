@@ -7,6 +7,8 @@ import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +16,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 import static fr.nelson.you_are_the_hero.model.db.Role.PLAYER;
 
@@ -76,4 +80,15 @@ public class UserService implements UserDetailsService {
     public boolean isAlreadyAnAdmin() {
         return appUserRepository.existsByRole(Role.ADMIN);
     }
+    public void deleteByUsername(String username, User userConnected) throws BadRequestException {
+        if(StringUtils.isEmpty(username) || Objects.isNull(userConnected) || StringUtils.isEmpty(userConnected.getUsername())) {
+            throw new BadRequestException("EMPTY_PARAMETER");
+        }
+        AppUser user = this.appUserRepository.findByUsername(userConnected.getUsername());
+        if(user.getUsername().equals(username) || Role.ADMIN.name().equals(user.getRole().name())) {
+            user.setDeleted(true);
+            this.appUserRepository.save(user);
+        }
+    }
+
 }
