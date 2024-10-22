@@ -1,6 +1,9 @@
 package fr.nelson.you_are_the_hero.controller;
 
 import fr.nelson.you_are_the_hero.exception.InvalidCredentialsException;
+import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
+import fr.nelson.you_are_the_hero.exception.InvalidTokenException;
+import fr.nelson.you_are_the_hero.exception.TokenExpiredException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.model.dto.AuthResponseDto;
@@ -95,6 +98,23 @@ public class AuthenticationController {
 
             AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
             return ResponseEntity.ok(newAccessToken);
+    }
+
+    @PostMapping("/admin")
+    public ResponseEntity<?> createAdmin(@RequestBody UserDto userDto){
+        MessageDto messageDto = new MessageDto();
+        try{
+            AppUser appUser = userService.createAdminUser(userDto);
+            messageDto.setMessage(appUser.getUsername() + " is now an admin");
+            return ResponseEntity.ok(messageDto);
+        } catch (AdminAlreadyExistException e) {
+            messageDto.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(messageDto);
+        } catch (UsernameNotFoundException e) {
+            messageDto.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
+        }
+
     }
 
 }
