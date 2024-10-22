@@ -13,6 +13,7 @@ import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.UserTemplateDto;
 import fr.nelson.you_are_the_hero.service.AuthenticationService;
 import fr.nelson.you_are_the_hero.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
