@@ -8,22 +8,19 @@ import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
 import org.apache.coyote.BadRequestException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import org.junit.jupiter.api.Assertions;
-
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
