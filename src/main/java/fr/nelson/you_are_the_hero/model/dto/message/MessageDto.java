@@ -5,6 +5,9 @@ import org.springframework.hateoas.RepresentationModel;
 public class MessageDto extends RepresentationModel<MessageDto> {
     private String message;
 
+    public MessageDto() {
+    }
+
     public MessageDto(String message) {
         this.message = message;
     }
