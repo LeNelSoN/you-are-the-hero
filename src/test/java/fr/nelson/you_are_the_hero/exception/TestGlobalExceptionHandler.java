@@ -1,8 +1,11 @@
 package fr.nelson.you_are_the_hero.exception;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.WebRequest;
@@ -12,25 +15,23 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class TestGlobalExceptionHandler {
 
+    @InjectMocks
     private GlobalExceptionHandler globalExceptionHandler;
+
+    @Mock
     private WebRequest mockWebRequest;
 
-    @BeforeEach
-    public void setUp() {
-        globalExceptionHandler = new GlobalExceptionHandler();
-        mockWebRequest = mock(WebRequest.class);
-    }
-
     @Test
-    public void handleTokenExpiredExceptionTest() {
+    public void testHandleTokenExpiredException() {
         String message = "Token has expired";
         TokenExpiredException tokenExpiredException = new TokenExpiredException(message);
         Mockito.when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/tokenExpiredException");
 
         ResponseEntity<?> responseEntity = globalExceptionHandler.handleTokenExpiredException(tokenExpiredException, mockWebRequest);
-        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
         assertEquals(ErrorDetails.class, Objects.requireNonNull(responseEntity.getBody()).getClass());
 
         ErrorDetails errorDetails = (ErrorDetails) responseEntity.getBody();
@@ -42,7 +43,7 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
-    public void UserAllreadyExistExceptionTest() {
+    public void testHandleUserAllreadyExistException() {
         String message = "User allready exists";
         UserAllreadyExistException userAllreadyExistException = new UserAllreadyExistException(message);
         when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/UserAllreadyExists");
@@ -50,7 +51,7 @@ public class TestGlobalExceptionHandler {
         ResponseEntity<?> responseEntity = globalExceptionHandler
                 .handleUserAllreadyExistException(userAllreadyExistException, mockWebRequest);
 
-        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
         assertEquals(ErrorDetails.class, Objects.requireNonNull(responseEntity.getBody()).getClass());
 
         ErrorDetails errorDetails = (ErrorDetails) responseEntity.getBody();
@@ -62,7 +63,7 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
-    public void StoryNotFoundExceptionTest() {
+    public void testHandleStoryNotFoundException() {
         String message = "Story not found";
         StoryNotFoundException storyNotFoundException = new StoryNotFoundException(message);
         when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/StoryNotFound");
@@ -81,7 +82,7 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
-    public void SceneAlreadyExistsExceptionTest() {
+    public void testHandleSceneAlreadyExistsException() {
         String message = "Scene already exists";
         SceneAlreadyExistsException sceneAlreadyExistsException = new SceneAlreadyExistsException(message);
         when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/SceneAlreadyExists");
@@ -89,7 +90,7 @@ public class TestGlobalExceptionHandler {
         ResponseEntity<?> responseEntity = globalExceptionHandler
                 .handleSceneAlreadyExistsException(sceneAlreadyExistsException, mockWebRequest);
 
-        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
         assertEquals(ErrorDetails.class, Objects.requireNonNull(responseEntity.getBody()).getClass());
 
         ErrorDetails errorDetails = (ErrorDetails) responseEntity.getBody();
@@ -100,7 +101,7 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
-    public void InvalidTokenExceptionTest() {
+    public void testHandleInvalidTokenException() {
         String message = "Invalid Token";
         InvalidTokenException invalidTokenException = new InvalidTokenException(message);
         when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/InvalidToken");
@@ -119,7 +120,7 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
-    public void InvalidCredentialsExceptionTest() {
+    public void testHandleInvalidCredentialsException() {
         String message = "Invalid Credentials";
         InvalidCredentialsException invalidCredentialsException = new InvalidCredentialsException(message);
         when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/InvalidCredentials");
@@ -138,7 +139,7 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
-    public void BadOwnerStoryExceptionTest() {
+    public void testHandleBadOwnerStoryException() {
         String message = "Bad Owner Story";
         BadOwnerStoryException badOwnerStoryException = new BadOwnerStoryException(message);
         when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/BadOwnerStory");
@@ -156,4 +157,41 @@ public class TestGlobalExceptionHandler {
         verify(mockWebRequest, times(1)).getDescription(false);
     }
 
+    @Test
+    public void testHandleRuntimeExceptionTest() {
+        String message = "Runtime Exception";
+        RuntimeException runtimeException = new RuntimeException(message);
+        when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/BadOwnerStory");
+
+        ResponseEntity<?> responseEntity = globalExceptionHandler
+                .handleRuntimeException(runtimeException, mockWebRequest);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals(ErrorDetails.class, Objects.requireNonNull(responseEntity.getBody()).getClass());
+
+        ErrorDetails errorDetails = (ErrorDetails) responseEntity.getBody();
+        assertEquals(message, errorDetails.getMessage());
+        assertEquals("uri=/test/BadOwnerStory", errorDetails.getDetails());
+
+        verify(mockWebRequest, times(1)).getDescription(false);
+    }
+
+    @Test
+    public void testHandleGeneralException() {
+        String message = "General Exception";
+        Exception exception = new Exception(message);
+        when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/BadOwnerStory");
+
+        ResponseEntity<?> responseEntity = globalExceptionHandler
+                .handleGeneralException(exception, mockWebRequest);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals(ErrorDetails.class, Objects.requireNonNull(responseEntity.getBody()).getClass());
+
+        ErrorDetails errorDetails = (ErrorDetails) responseEntity.getBody();
+        assertEquals("An error occurred", errorDetails.getMessage());
+        assertEquals("uri=/test/BadOwnerStory", errorDetails.getDetails());
+
+        verify(mockWebRequest, times(1)).getDescription(false);
+    }
 }
