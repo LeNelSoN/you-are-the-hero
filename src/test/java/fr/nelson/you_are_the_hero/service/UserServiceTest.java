@@ -7,17 +7,20 @@ import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
+import org.apache.coyote.BadRequestException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import org.junit.jupiter.api.Assertions;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -106,6 +109,41 @@ public class UserServiceTest {
             userService.loadUserByUsername("unknown-username");
         });
 
+    }
+
+    @Test
+    public void test_deleteUserByUsername_ok() throws BadRequestException {
+        AppUser user = new AppUser();
+        user.setPassword("123");
+        user.setRole(Role.PLAYER);
+        user.setUsername("username");
+        User testUser = new User("username", "123", true, false, false, false, new ArrayList<>());
+        when(this.appUserRepository.findByUsername(Mockito.anyString())).thenReturn(user);
+        when(this.appUserRepository.save(Mockito.any())).thenReturn(user);
+        this.userService.deleteByUsername("username", testUser);
+    }
+
+    @Test
+    public void test_deleteUserByAdmin_ok() throws BadRequestException {
+        AppUser user = new AppUser();
+        user.setPassword("123");
+        user.setRole(Role.ADMIN);
+        user.setUsername("username");
+        User testUser = new User("usernameAdmin", "123", true, false, false, false, new ArrayList<>());
+        when(this.appUserRepository.findByUsername(Mockito.anyString())).thenReturn(user);
+        when(this.appUserRepository.save(Mockito.any())).thenReturn(user);
+        this.userService.deleteByUsername("username", testUser);
+    }
+
+    @Test
+    public void test_deleteUserWrongUserConnected_NoAdmin_ok() throws BadRequestException {
+        AppUser user = new AppUser();
+        user.setPassword("123");
+        user.setRole(Role.PLAYER);
+        user.setUsername("usernamePlayer");
+        User testUser = new User("usernamePlayer", "123", true, false, false, false, new ArrayList<>());
+        when(this.appUserRepository.findByUsername(Mockito.anyString())).thenReturn(user);
+        this.userService.deleteByUsername("username", testUser);
     }
 
     @Test

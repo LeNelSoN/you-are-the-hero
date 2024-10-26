@@ -11,6 +11,7 @@ public class AppUser {
     private String username;
     private String password;
     private Role role;
+    private boolean deleted;
 
     public String getUsername() {
         return username;
@@ -34,6 +35,14 @@ public class AppUser {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }
 
