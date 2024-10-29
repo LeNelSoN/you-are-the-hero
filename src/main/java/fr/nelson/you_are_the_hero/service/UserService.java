@@ -80,6 +80,7 @@ public class UserService implements UserDetailsService {
     public boolean isAlreadyAnAdmin() {
         return appUserRepository.existsByRole(Role.ADMIN);
     }
+
     public void deleteByUsername(String username, User userConnected) throws BadRequestException {
         if(StringUtils.isEmpty(username) || Objects.isNull(userConnected) || StringUtils.isEmpty(userConnected.getUsername())) {
             throw new BadRequestException("EMPTY_PARAMETER");
@@ -89,6 +90,20 @@ public class UserService implements UserDetailsService {
             user.setDeleted(true);
             this.appUserRepository.save(user);
         }
+    }
+
+    public AppUser promoteUserToEditor(String username) throws BadRequestException {
+        if(StringUtils.isEmpty(username)) {
+            throw new BadRequestException("EMPTY_PARAMETER");
+        }
+
+        AppUser userToPromote = findAppUserByUsername(username);
+        if (userToPromote.getRole() == Role.EDITOR) {
+            throw new BadRequestException("USER_ALREADY_EDITOR");
+        }
+
+        userToPromote.setRole(Role.EDITOR);
+        return appUserRepository.save(userToPromote);
     }
 
 }
