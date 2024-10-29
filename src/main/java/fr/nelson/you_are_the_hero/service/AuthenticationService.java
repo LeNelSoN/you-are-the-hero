@@ -5,6 +5,7 @@ import fr.nelson.you_are_the_hero.exception.InvalidTokenException;
 import fr.nelson.you_are_the_hero.exception.TokenExpiredException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.db.RefreshToken;
+import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthResponseDto;
 import fr.nelson.you_are_the_hero.repository.RefreshTokenRepository;
 import fr.nelson.you_are_the_hero.utility.JwtUtil;
@@ -13,13 +14,16 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class AuthenticationService {
@@ -84,4 +88,20 @@ public class AuthenticationService {
         return new AuthResponseDto(newAccessToken, newRefreshToken);
     }
 
+    public List<Role> getUserRolesFromToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getAuthorities().stream()
+                    .map(grantedAuthority -> grantedAuthority.getAuthority().replace("ROLE_", ""))
+                    .map(Role::valueOf)
+                    .toList();
+        }
+
+        return List.of();
+    }
+
+    public boolean hasRole(Role role) {
+        return getUserRolesFromToken().contains(role);
+    }
 }
