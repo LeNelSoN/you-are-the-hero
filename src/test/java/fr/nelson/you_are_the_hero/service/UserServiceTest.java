@@ -21,6 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -206,5 +207,59 @@ public class UserServiceTest {
         Boolean isAnAdmin = userService.isAlreadyAnAdmin();
 
         assertTrue(isAnAdmin);
+    }
+
+    @Test
+    void promoteUserToEditor_SuccessfulPromotion() throws BadRequestException {
+        AppUser user = new AppUser();
+        user.setUsername("Perceval");
+        user.setRole(Role.PLAYER);
+
+        when(appUserRepository.findByUsername("Perceval")).thenReturn(user);
+        when(appUserRepository.save(user)).thenReturn(user);
+
+        AppUser promotedUser = userService.promoteUserToEditor("Perceval");
+
+        assertEquals(Role.EDITOR, promotedUser.getRole());
+        verify(appUserRepository).save(user);
+    }
+
+    @Test
+    void promoteUserToEditor_UserAlreadyEditor() {
+        AppUser user = new AppUser();
+        user.setUsername("Perceval");
+        user.setRole(Role.EDITOR);
+
+        when(appUserRepository.findByUsername("Perceval")).thenReturn(user);
+
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            userService.promoteUserToEditor("Perceval");
+        });
+
+        assertEquals("USER_ALREADY_EDITOR", exception.getMessage());
+        verify(appUserRepository, never()).save(any());
+    }
+
+    @Test
+    void promoteUserToEditor_UserNotFound() {
+        when(appUserRepository.findByUsername("unknownUser")).thenReturn(null);
+
+        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
+            userService.promoteUserToEditor("unknownUser");
+        });
+
+        assertEquals("User Not Found", exception.getMessage());
+        verify(appUserRepository, never()).save(any());
+    }
+
+    @Test
+    void promoteUserToEditor_EmptyUsername() {
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            userService.promoteUserToEditor("");
+        });
+
+        assertEquals("EMPTY_PARAMETER", exception.getMessage());
+        verify(appUserRepository, never()).findByUsername(any());
+        verify(appUserRepository, never()).save(any());
     }
 }
