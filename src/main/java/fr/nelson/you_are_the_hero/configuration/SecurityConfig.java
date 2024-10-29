@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                         authorizationManagerRequestMatcherRegistry
-                                .requestMatchers("/","/auth/**", "/auth/admin").permitAll()
+                                .requestMatchers("/", "/auth/**", "/story/**", "/scene/**", "/game/**").permitAll()
                                 .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
