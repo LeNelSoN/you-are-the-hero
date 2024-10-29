@@ -2,7 +2,6 @@ package fr.nelson.you_are_the_hero.controller;
 
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
-import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.StoryDto;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.StoryTemplateDto;
@@ -27,6 +26,7 @@ public class StoryController {
     @Autowired
     StoryService storyService;
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @GetMapping(path = "/template")
     public ResponseEntity<StoryTemplateDto> getTemplate(){
         StoryTemplateDto template = new StoryTemplateDto("Your Story title", "A description of your story");
@@ -34,12 +34,16 @@ public class StoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StoryDto>> getAllStory(){
+    public ResponseEntity<List<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException {
         List<Story> allStory = storyService.getAllStory();
         List<StoryDto> storyDtoList = new ArrayList<>();
         for(Story story: allStory){
             StoryDto storyDto = new StoryDto(story.getTitle(), story.getDescription());
-            storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).play(story.getFirstSceneId())).withRel("startStory").withType(HttpMethod.GET.name()));
+            if(story.getFirstSceneId() != null) {
+                storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).play(story.getFirstSceneId())).withRel("startStory").withType(HttpMethod.GET.name()));
+            } else {
+                storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).addFirstSceneToStory(story.getId(), null, null)).withRel("addFirstScene").withType(HttpMethod.POST.name()));
+            }
             storyDtoList.add(storyDto);
         }
         return ResponseEntity.ok(storyDtoList);
@@ -56,7 +60,6 @@ public class StoryController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("An unexpected error occurred on the server. Please try again later.");
         }
-
     }
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
