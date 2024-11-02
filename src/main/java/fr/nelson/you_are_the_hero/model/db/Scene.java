@@ -12,6 +12,7 @@ public class Scene {
 
     @Id
     private String id;
+    private String author;
     private String previousSceneId;
     private String description;
     private List<Choice> choices = new ArrayList<>();
@@ -26,6 +27,12 @@ public class Scene {
     public Scene(String description, String previousSceneId) {
         this.description = description;
         this.previousSceneId = previousSceneId;
+    }
+
+    public Scene(String description, String previousSceneId, String author) {
+        this.description = description;
+        this.previousSceneId = previousSceneId;
+        this.author = author;
     }
 
     public String getId() {
@@ -62,6 +69,14 @@ public class Scene {
 
     public void addChoice(Choice choice) {
         this.choices.add(choice);
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
     }
 }
 

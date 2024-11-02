@@ -10,6 +10,8 @@ import fr.nelson.you_are_the_hero.repository.AppUserRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -37,6 +39,12 @@ public class UserService implements UserDetailsService {
                 .password(appUser.getPassword())
                 .roles(appUser.getRole().name())
                 .build();
+    }
+
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        return StringUtils.defaultString(authentication != null && authentication.isAuthenticated() ? authentication.getName() : null);
     }
 
     public AppUser saveUser(AuthRequestDto authRequestDto) throws UserAllreadyExistException {

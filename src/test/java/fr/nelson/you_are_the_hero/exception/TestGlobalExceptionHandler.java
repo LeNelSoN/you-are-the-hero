@@ -177,6 +177,25 @@ public class TestGlobalExceptionHandler {
     }
 
     @Test
+    public void testHandleSceneNotFoundException() {
+        String message = "Scene not found";
+        SceneNotFoundException exception = new SceneNotFoundException(message);
+        when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/SceneNotFound");
+
+        ResponseEntity<?> responseEntity = globalExceptionHandler
+                .handleSceneNotFoundException(exception, mockWebRequest);
+
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals(ErrorDetails.class, Objects.requireNonNull(responseEntity.getBody()).getClass());
+
+        ErrorDetails errorDetails = (ErrorDetails) responseEntity.getBody();
+        assertEquals("Scene not found", errorDetails.getMessage());
+        assertEquals("uri=/test/SceneNotFound", errorDetails.getDetails());
+
+        verify(mockWebRequest, times(1)).getDescription(false);
+    }
+
+    @Test
     public void testHandleGeneralException() {
         String message = "General Exception";
         Exception exception = new Exception(message);

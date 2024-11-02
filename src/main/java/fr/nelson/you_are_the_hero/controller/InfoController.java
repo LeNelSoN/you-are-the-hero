@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.InvalidCredentialsException;
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
@@ -24,7 +25,7 @@ public class InfoController {
     AuthenticationService authenticationService;
 
     @GetMapping
-    public ResponseEntity<MessageDto> getInfo(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) throws InvalidCredentialsException, BadRequestException, StoryNotFoundException, SceneAlreadyExistsException {
+    public ResponseEntity<MessageDto> getInfo(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) throws InvalidCredentialsException, BadRequestException, StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
         String welcomeMsg = "Welcome, Traveler. You are about to embark on a journey through magical realms full of mysteries. As the Pilgrim, you'll explore forgotten kingdoms and uncover ancient secrets. Each world offers unique challenges. Your skills and spirit will guide you. The adventure begins now step into the unknown, where legends come to life and the fate of worlds is in your hands.";
 
         MessageDto message = new MessageDto(welcomeMsg);

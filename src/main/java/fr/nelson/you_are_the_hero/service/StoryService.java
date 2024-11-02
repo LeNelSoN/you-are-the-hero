@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.service;
 
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
 import fr.nelson.you_are_the_hero.model.db.Scene;
@@ -25,7 +26,7 @@ public class StoryService {
         return storyRepository.save(story);
     }
 
-    public Story addSceneToStory(String storyId, Scene scene, String username) throws SceneAlreadyExistsException, StoryNotFoundException {
+    public Story addSceneToStory(String storyId, Scene scene, String username) throws SceneAlreadyExistsException, StoryNotFoundException, BadOwnerStoryException {
         if (storyId == null || storyId.isEmpty()) {
             throw new IllegalArgumentException("Story ID cannot be null or empty");
         }
@@ -34,19 +35,11 @@ public class StoryService {
             throw new IllegalArgumentException("Scene cannot be null");
         }
 
-        Optional<Story> possibleStory = storyRepository.findByIdAndCreatedBy(storyId, username);
-        if(possibleStory.isPresent()){
-            Scene savedScene = sceneRepository.save(scene);
-            Story story = possibleStory.get();
-            if(story.getFirstSceneId() == null){
-                story.setFirstSceneId(savedScene.getId());
-                return storyRepository.save(story);
-            } else {
-                throw new SceneAlreadyExistsException("The first scene is already exist");
-            }
-        } else {
-            throw new StoryNotFoundException("Story not found");
-        }
+        Story story = storyRepository.findByIdAndCreatedBy(storyId, username)
+                .orElseThrow(() -> new StoryNotFoundException("Story not found"));
+
+        return saveSceneToStory(scene, username, story);
+
     }
 
     public List<Story> getAllStory(){
@@ -66,4 +59,19 @@ public class StoryService {
         }
     }
 
+    private Story saveSceneToStory(Scene scene, String username, Story story) throws BadOwnerStoryException, SceneAlreadyExistsException {
+        if(!story.getCreatedBy().equals(username)){
+            throw new BadOwnerStoryException("The user can't modify this story");
+        }
+
+        if(story.getFirstSceneId() != null){
+            throw new SceneAlreadyExistsException("The first scene already exists");
+        }
+
+        scene.setAuthor(username);
+        Scene savedScene = sceneRepository.save(scene);
+        story.setFirstSceneId(savedScene.getId());
+        return storyRepository.save(story);
+
+    }
 }
