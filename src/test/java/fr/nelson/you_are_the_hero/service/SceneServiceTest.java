@@ -23,21 +23,26 @@ public class SceneServiceTest {
     @Mock
     private SceneRepository sceneRepository;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private SceneService sceneService;
 
     @Test
     void testAddNewScene_Success() throws BadOwnerStoryException {
         // Arrange
+        String author = "Jean Neige";
         String parentId = "parent123";
         AddSceneDto sceneToAdd = new AddSceneDto("New scene description", "New choice");
-        Scene parentScene = new Scene("Parent scene", null);
+        Scene parentScene = new Scene("Parent scene", null, author);
         parentScene.setId(parentId);
         Scene childScene = new Scene("New scene description", parentId);
         childScene.setId("child456");
 
         when(sceneRepository.findById(parentId)).thenReturn(Optional.of(parentScene));
         when(sceneRepository.save(any(Scene.class))).thenReturn(childScene).thenReturn(parentScene);
+        when(userService.getCurrentUsername()).thenReturn(author);
 
         // Act
         Scene result = sceneService.addNewScene(parentId, sceneToAdd);
@@ -47,6 +52,7 @@ public class SceneServiceTest {
         assertEquals(1, result.getChoices().size());
         assertEquals("New choice", result.getChoices().get(0).getDescription());
         assertEquals("child456", result.getChoices().get(0).getNextSceneId());
+        assertEquals("Jean Neige", result.getAuthor());
         verify(sceneRepository, times(2)).save(any(Scene.class));
     }
 
@@ -60,6 +66,26 @@ public class SceneServiceTest {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> sceneService.addNewScene(parentId, sceneToAdd));
+    }
+
+    @Test
+    void testAddNewScene_WrongAuthor() {
+        String author = "Jean Neige";
+        String parentId = "parent123";
+
+        AddSceneDto sceneToAdd = new AddSceneDto("New scene description", "New choice");
+
+        Scene parentScene = new Scene("Parent scene", null, author);
+        parentScene.setId(parentId);
+
+        Scene childScene = new Scene("New scene description", parentId);
+        childScene.setId("child456");
+
+        when(sceneRepository.findById(parentId)).thenReturn(Optional.of(parentScene));
+        when(userService.getCurrentUsername()).thenReturn("Cercei Lannister");
+
+        assertThrows(BadOwnerStoryException.class, () -> sceneService.addNewScene(parentId, sceneToAdd));
+        verify(sceneRepository, never()).save(any(Scene.class));
     }
 
     @Test

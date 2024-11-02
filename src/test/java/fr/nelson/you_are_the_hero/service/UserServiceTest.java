@@ -15,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -33,9 +36,46 @@ public class UserServiceTest {
     private AppUserRepository appUserRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private Authentication authentication;
+    @Mock
+    private SecurityContext securityContext;
 
     @InjectMocks
     private UserService userService;
+
+    @Test
+    public void test_getCurrentUsername_OK() {
+        SecurityContextHolder.setContext(securityContext);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("Jean Neige");
+
+        String currentUsername = userService.getCurrentUsername();
+        assertEquals("Jean Neige", currentUsername);
+    }
+
+    @Test
+    public void test_getCurrentUsername_NotAuthenticated() {
+        SecurityContextHolder.setContext(securityContext);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(false);
+
+        String currentUsername = userService.getCurrentUsername();
+        assertEquals("", currentUsername);
+    }
+
+    @Test
+    public void test_getCurrentUsername_NullAuthentication() {
+        SecurityContextHolder.setContext(securityContext);
+
+        when(securityContext.getAuthentication()).thenReturn(null);
+
+        String currentUsername = userService.getCurrentUsername();
+        assertEquals("", currentUsername);
+    }
 
     @Test
     public void test_createNewUser_OK() throws Exception {

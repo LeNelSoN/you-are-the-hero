@@ -74,6 +74,7 @@ public class StoryServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(scene.getId(), result.getFirstSceneId());
+        assertEquals("username", scene.getAuthor());
         verify(storyRepository, times(1)).save(story);
         verify(sceneRepository, times(1)).save(scene);
     }
