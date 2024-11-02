@@ -3,6 +3,7 @@ package fr.nelson.you_are_the_hero.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.db.Scene;
@@ -26,7 +27,7 @@ public class SceneServiceTest {
     private SceneService sceneService;
 
     @Test
-    void testAddNewScene_Success() {
+    void testAddNewScene_Success() throws BadOwnerStoryException {
         // Arrange
         String parentId = "parent123";
         AddSceneDto sceneToAdd = new AddSceneDto("New scene description", "New choice");

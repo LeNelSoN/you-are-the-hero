@@ -39,6 +39,11 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex,HttpStatus.CONFLICT, request);
     }
 
+    @ExceptionHandler(SceneNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleSceneNotFoundException(SceneNotFoundException ex, WebRequest request) {
+        return createErrorResponse(ex,HttpStatus.NOT_FOUND, request);
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ErrorDetails> handleInvalidTokenException(InvalidTokenException ex, WebRequest request) {
         return createErrorResponse(ex,HttpStatus.FORBIDDEN, request);

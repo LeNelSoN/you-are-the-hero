@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.dto.SceneDto;
@@ -11,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,8 +35,9 @@ public class SceneController {
         return ResponseEntity.ok(template);
     }
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping(path = "/{parentSceneId}")
-    public ResponseEntity<SceneDto> addScene(@PathVariable String parentSceneId, @RequestBody AddSceneDto childScene){
+    public ResponseEntity<SceneDto> addScene(@PathVariable String parentSceneId, @RequestBody AddSceneDto childScene) throws BadOwnerStoryException {
         Scene scene = sceneService.addNewScene(parentSceneId, childScene);
         SceneDto sceneDto = new SceneDto(scene.getDescription(), scene.getChoices());
 
@@ -51,7 +56,7 @@ public class SceneController {
     }
 
     @GetMapping(path = "/{sceneId}")
-    public ResponseEntity<SceneDto> getScene(@PathVariable String sceneId){
+    public ResponseEntity<SceneDto> getScene(@PathVariable String sceneId) throws BadOwnerStoryException {
         Scene scene = sceneService.getSceneById(sceneId);
         SceneDto sceneDto = new SceneDto(scene.getDescription(), scene.getChoices());
 
@@ -81,7 +86,7 @@ public class SceneController {
         return ResponseEntity.ok(sceneDto);
     }
 
-    private static SceneDto addNextSceneLink(SceneDto sceneDto) {
+    private static SceneDto addNextSceneLink(SceneDto sceneDto) throws BadOwnerStoryException {
         for(Choice choice: sceneDto.getChoices()){
             sceneDto.add(
                     WebMvcLinkBuilder

@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
 import fr.nelson.you_are_the_hero.model.dto.StoryDto;
@@ -34,7 +35,7 @@ public class StoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException {
+    public ResponseEntity<List<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
         List<Story> allStory = storyService.getAllStory();
         List<StoryDto> storyDtoList = new ArrayList<>();
         for(Story story: allStory){
@@ -64,7 +65,7 @@ public class StoryController {
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping
-    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException {
+    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
         User user = (User) authentication.getPrincipal();
         story.setCreatedBy(user.getUsername());
         Story newStory = storyService.createNewStory(story);
@@ -76,7 +77,7 @@ public class StoryController {
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping(path = "/{storyId}/scene")
-    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException {
+    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
 
             User user = (User) authentication.getPrincipal();
             Story updatedStory = storyService.addSceneToStory(storyId, scene, user.getUsername());
