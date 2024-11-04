@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SceneRepository extends MongoRepository<Scene, String> {
+    boolean existsByPreviousSceneId(String previousSceneId);
 }
