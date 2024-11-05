@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
+import fr.nelson.you_are_the_hero.exception.SceneHasChildrenException;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.db.Scene;
@@ -11,10 +12,15 @@ import fr.nelson.you_are_the_hero.repository.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -116,4 +122,72 @@ public class SceneServiceTest {
         // Act & Assert
         assertThrows(RuntimeException.class, () -> sceneService.getSceneById(sceneId));
     }
+
+    @Test
+    void testDeleteSceneById_Success() throws BadOwnerStoryException {
+        Scene parentScene = new Scene("Description", null,  "Jean Neige");
+        parentScene.setId("parentSceneId1234");
+
+        Scene childScene = new Scene("Child Description", "parentSceneId1234",  "Jean Neige");
+        childScene.setId("childSceneId1234");
+
+        parentScene.setChoices(new ArrayList<>(List.of(new Choice("Choice Description", "childSceneId1234"))));
+
+        when(sceneRepository.findById("childSceneId1234")).thenReturn(Optional.of(childScene));
+        when(sceneRepository.findById(childScene.getPreviousSceneId())).thenReturn(Optional.of(parentScene));
+        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
+        when(sceneRepository.existsByPreviousSceneId("childSceneId1234")).thenReturn(false);
+
+        sceneService.deleteSceneById("childSceneId1234");
+
+        verify(sceneRepository).deleteById("childSceneId1234");
+        assertFalse(
+                parentScene.getChoices()
+                    .stream()
+                        .anyMatch(choice -> choice.getNextSceneId().equals("childSceneId1234"))
+        );
+    }
+
+    @Test
+    void testDeleteSceneById_withChildScene() throws BadOwnerStoryException {
+        Scene parentScene = new Scene("Description", null,  "Jean Neige");
+        parentScene.setId("parentSceneId1234");
+
+        Scene childScene = new Scene("Child Description", "parentSceneId1234",  "Jean Neige");
+        childScene.setId("childSceneId1234");
+
+        parentScene.setChoices(new ArrayList<>(List.of(new Choice("Choice Description", "childSceneId1234"))));
+
+        when(sceneRepository.findById("childSceneId1234")).thenReturn(Optional.of(childScene));
+        when(sceneRepository.findById(childScene.getPreviousSceneId())).thenReturn(Optional.of(parentScene));
+        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
+        when(sceneRepository.existsByPreviousSceneId("childSceneId1234")).thenReturn(true);
+
+        assertThrows(SceneHasChildrenException.class,  () -> sceneService.deleteSceneById("childSceneId1234"));
+    }
+
+    @Test
+    void testDeleteSceneById_WithWrongAuthor() throws BadOwnerStoryException {
+        Scene parentScene = new Scene("Description", null,  "Jean Neige");
+        parentScene.setId("parentSceneId1234");
+
+        Scene childScene = new Scene("Child Description", "parentSceneId1234",  "Jean Neige");
+        childScene.setId("childSceneId1234");
+
+        parentScene.setChoices(new ArrayList<>(List.of(new Choice("Choice Description", "childSceneId1234"))));
+
+        when(sceneRepository.findById("childSceneId1234")).thenReturn(Optional.of(childScene));
+        when(sceneRepository.findById(childScene.getPreviousSceneId())).thenReturn(Optional.of(parentScene));
+        when(userService.getCurrentUsername()).thenReturn("Sam Tarly");
+
+        assertThrows(BadOwnerStoryException.class,  () -> sceneService.deleteSceneById("childSceneId1234"));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    void testDeleteSceneById_WithInvalid(String id) {
+        assertThrows(IllegalArgumentException.class,  () -> sceneService.deleteSceneById(id));
+    }
+
 }

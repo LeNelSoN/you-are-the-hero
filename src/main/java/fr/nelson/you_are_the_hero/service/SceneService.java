@@ -1,7 +1,6 @@
 package fr.nelson.you_are_the_hero.service;
 
 import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
-import fr.nelson.you_are_the_hero.exception.ChoiceNotFoundException;
 import fr.nelson.you_are_the_hero.exception.SceneNotFoundException;
 import fr.nelson.you_are_the_hero.exception.SceneHasChildrenException;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
@@ -30,17 +29,6 @@ public class SceneService {
         return addChoiceToParentScene(parentScene, childScene.getId(), sceneToAdd.getChoice());
     }
 
-    private Scene addChoiceToParentScene(Scene parentScene, String childSceneId, String choiceDescription) {
-        Choice choice = new Choice(choiceDescription, childSceneId);
-        parentScene.addChoice(choice);
-        return sceneRepository.save(parentScene);
-    }
-
-    private Scene createChildScene(String description, String parentSceneId, String username){
-        Scene newScene = new Scene(description, parentSceneId, username);
-        return sceneRepository.save(newScene);
-    }
-
     public Scene getSceneById(String id){
         Optional<Scene> sceneOptional = sceneRepository.findById(id);
         if (sceneOptional.isPresent()){
@@ -50,18 +38,15 @@ public class SceneService {
         }
     }
 
-    public boolean hasChildScene(String id){
-        return sceneRepository.existsByPreviousSceneId(id);
-    }
-
     public void deleteSceneById(String id) throws BadOwnerStoryException {
-        Scene parentScene = getParentScene(id);
-
-        validateAuthor(parentScene);
 
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Scene ID cannot be null or empty.");
         }
+
+        Scene parentScene = getParentScene(id);
+
+        validateAuthor(parentScene);
 
         if(hasChildScene(id)) {
             throw new SceneHasChildrenException("Cannot delete scene with children.");
@@ -76,16 +61,7 @@ public class SceneService {
         }
     }
 
-    public void deleteChoiceFromScene(Scene parentScene, String sceneId){
-        boolean choiceRemoved = parentScene.getChoices().removeIf(choice -> choice.getNextSceneId().equals(sceneId));
-        if (!choiceRemoved) {
-            throw new ChoiceNotFoundException("Choice not found for ID: " + sceneId);
-        }
-
-        sceneRepository.save(parentScene);
-    }
-
-    public Scene getParentScene(String childSceneId) {
+    private Scene getParentScene(String childSceneId) {
 
         Scene childScene = sceneRepository.findById(childSceneId)
                 .orElseThrow(() -> new SceneNotFoundException("Child scene not found"));
@@ -94,7 +70,17 @@ public class SceneService {
                 .orElseThrow(() -> new SceneNotFoundException("Parent scene not found"));
     }
 
-    public String validateAuthor(Scene parentScene) throws BadOwnerStoryException {
+    private void deleteChoiceFromScene(Scene parentScene, String sceneId){
+
+        boolean choiceRemoved = parentScene.getChoices().removeIf(choice -> choice.getNextSceneId().equals(sceneId));
+
+        if (choiceRemoved) {
+            sceneRepository.save(parentScene);
+        }
+
+    }
+
+    private String validateAuthor(Scene parentScene) throws BadOwnerStoryException {
         String currentUsername = userService.getCurrentUsername();
 
         if (currentUsername == null) {
@@ -106,5 +92,20 @@ public class SceneService {
         }
 
         return currentUsername;
+    }
+
+    private Scene addChoiceToParentScene(Scene parentScene, String childSceneId, String choiceDescription) {
+        Choice choice = new Choice(choiceDescription, childSceneId);
+        parentScene.addChoice(choice);
+        return sceneRepository.save(parentScene);
+    }
+
+    private Scene createChildScene(String description, String parentSceneId, String username){
+        Scene newScene = new Scene(description, parentSceneId, username);
+        return sceneRepository.save(newScene);
+    }
+
+    private boolean hasChildScene(String id){
+        return sceneRepository.existsByPreviousSceneId(id);
     }
 }
