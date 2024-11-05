@@ -59,6 +59,11 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex, HttpStatus.NOT_FOUND, request);
     }
 
+    @ExceptionHandler(SceneHasChildrenException.class)
+    public ResponseEntity<ErrorDetails> handleSceneHasChildrenException(SceneHasChildrenException ex, WebRequest request) {
+        return createErrorResponse(ex, HttpStatus.FORBIDDEN, request);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorDetails> handleRuntimeException(RuntimeException ex, WebRequest request) {
         return createErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, request);

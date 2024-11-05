@@ -4,6 +4,7 @@ import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.dto.SceneDto;
+import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.AddSceneTemplateDto;
 import fr.nelson.you_are_the_hero.model.dto.template.SceneTemplateDto;
 import fr.nelson.you_are_the_hero.model.db.Scene;
@@ -13,8 +14,6 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,12 +22,14 @@ public class SceneController {
     @Autowired
     SceneService sceneService;
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @GetMapping(path = "/template/firstScene")
     public ResponseEntity<SceneTemplateDto> getFirstSceneTemplate(){
         SceneTemplateDto template = new SceneTemplateDto("A description of your scene");
         return ResponseEntity.ok(template);
     }
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @GetMapping(path = "/template")
     public ResponseEntity<AddSceneTemplateDto> getTemplate(){
         AddSceneTemplateDto template = new AddSceneTemplateDto("A description of your scene", "The description of the choice");
@@ -45,16 +46,17 @@ public class SceneController {
 
         if(scene.getPreviousSceneId() != null){
             sceneDto.add(WebMvcLinkBuilder.linkTo(
-                            WebMvcLinkBuilder
-                                    .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
-                    .withRel("previousScene")
-                    .withType(HttpMethod.GET.name())
+                    WebMvcLinkBuilder
+                            .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
+                            .withRel("previousScene")
+                            .withType(HttpMethod.GET.name())
             );
         }
 
         return ResponseEntity.ok(sceneDto);
     }
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @GetMapping(path = "/{sceneId}")
     public ResponseEntity<SceneDto> getScene(@PathVariable String sceneId) throws BadOwnerStoryException {
         Scene scene = sceneService.getSceneById(sceneId);
@@ -74,16 +76,31 @@ public class SceneController {
                         .withRel("addNextScene")
                         .withType(HttpMethod.POST.name()));
 
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                WebMvcLinkBuilder
+                        .methodOn(SceneController.class).deleteScene(sceneId))
+                        .withRel("deleteScene")
+                        .withType(HttpMethod.DELETE.name()));
+
         if(scene.getPreviousSceneId() != null){
             sceneDto.add(WebMvcLinkBuilder.linkTo(
-                            WebMvcLinkBuilder
-                                    .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
-                    .withRel("previousScene")
-                    .withType(HttpMethod.GET.name())
+                    WebMvcLinkBuilder
+                            .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
+                            .withRel("previousScene")
+                            .withType(HttpMethod.GET.name())
             );
         }
 
         return ResponseEntity.ok(sceneDto);
+    }
+
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
+    @DeleteMapping(path = "/{sceneId}")
+    public ResponseEntity<MessageDto> deleteScene(@PathVariable String sceneId) throws BadOwnerStoryException {
+        sceneService.deleteSceneById(sceneId);
+        MessageDto messageDto = new MessageDto("Scene has been deleted");
+
+        return ResponseEntity.ok(messageDto);
     }
 
     private static SceneDto addNextSceneLink(SceneDto sceneDto) throws BadOwnerStoryException {
