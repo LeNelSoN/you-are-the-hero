@@ -8,6 +8,7 @@ import fr.nelson.you_are_the_hero.exception.SceneHasChildrenException;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.db.Scene;
+import fr.nelson.you_are_the_hero.model.dto.SceneDto;
 import fr.nelson.you_are_the_hero.repository.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -121,6 +122,67 @@ public class SceneServiceTest {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> sceneService.getSceneById(sceneId));
+    }
+
+    @Test
+    void testUpdateSceneDescriptionById_Success() throws BadOwnerStoryException {
+        SceneDto sceneDto = new SceneDto();
+        sceneDto.setDescription("updated description");
+        Scene scene = new Scene("description", null, "Jean Neige");
+        String sceneId = "idScene1234";
+
+        when(sceneRepository.findById(sceneId)).thenReturn(Optional.of(scene));
+        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
+        when(sceneRepository.save(any(Scene.class))).thenReturn(scene);
+
+        Scene updatedScene = sceneService.updateSceneDescriptionById(sceneId, sceneDto);
+
+        assertNotNull(updatedScene);
+        assertEquals("updated description", updatedScene.getDescription());
+
+        verify(sceneRepository,  times(1)).save(any(Scene.class));
+    }
+
+    @Test
+    void testUpdateSceneDescriptionById_InvalidAuthor(){
+        SceneDto sceneDto = new SceneDto();
+        sceneDto.setDescription("updated description");
+        Scene scene = new Scene("description", null, "Jean Neige");
+
+        when(sceneRepository.findById(any())).thenReturn(Optional.of(scene));
+        when(userService.getCurrentUsername()).thenReturn("wrong author");
+
+        assertThrows(BadOwnerStoryException.class, () -> {
+            sceneService.updateSceneDescriptionById("sceneId", sceneDto);
+        });
+
+        verify(sceneRepository, never()).save(any());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    void testupdateSceneDescriptionById_sceneDtoNull(SceneDto sceneDto) {
+        assertThrows(IllegalArgumentException.class, () -> {
+            sceneService.updateSceneDescriptionById("sceneId", sceneDto);
+        });
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    void testupdateSceneDescriptionById_sceneDtoWithInvalidDescription(String description) {
+        assertThrows(IllegalArgumentException.class, () -> {
+            sceneService.updateSceneDescriptionById("sceneId", new SceneDto(description, null));
+        });
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    void testupdateSceneDescriptionById_sceneDtoWithInvalidSceneId(String sceneId) {
+        assertThrows(IllegalArgumentException.class, () -> {
+            sceneService.updateSceneDescriptionById(sceneId, new SceneDto("description", null));
+        });
     }
 
     @Test

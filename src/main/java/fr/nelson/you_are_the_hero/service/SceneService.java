@@ -6,6 +6,7 @@ import fr.nelson.you_are_the_hero.exception.SceneHasChildrenException;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.db.Scene;
+import fr.nelson.you_are_the_hero.model.dto.SceneDto;
 import fr.nelson.you_are_the_hero.repository.SceneRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -36,6 +37,22 @@ public class SceneService {
         } else {
             throw new SceneNotFoundException("Scene not found");
         }
+    }
+
+    public Scene updateSceneDescriptionById(String id, SceneDto sceneDto) throws BadOwnerStoryException {
+        if (id == null || id.isEmpty()) {
+            throw new IllegalArgumentException("Scene ID cannot be null or empty.");
+        }
+
+        if (sceneDto == null || sceneDto.getDescription() == null || sceneDto.getDescription().isEmpty()) {
+            throw new IllegalArgumentException("Description cannot be null or empty.");
+        }
+
+        Scene sceneToUpdate = getSceneById(id);
+        validateAuthor(sceneToUpdate);
+
+        sceneToUpdate.setDescription(sceneDto.getDescription());
+        return sceneRepository.save(sceneToUpdate);
     }
 
     public void deleteSceneById(String id) throws BadOwnerStoryException {
