@@ -30,6 +30,13 @@ public class SceneController {
     }
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
+    @GetMapping(path = "/template/changeDescription")
+    public ResponseEntity<SceneTemplateDto> getDescriptionTemplate(){
+        SceneTemplateDto template = new SceneTemplateDto("A new description of your scene");
+        return ResponseEntity.ok(template);
+    }
+
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @GetMapping(path = "/template")
     public ResponseEntity<AddSceneTemplateDto> getTemplate(){
         AddSceneTemplateDto template = new AddSceneTemplateDto("A description of your scene", "The description of the choice");
@@ -77,6 +84,18 @@ public class SceneController {
                         .withType(HttpMethod.POST.name()));
 
         sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).getDescriptionTemplate())
+                .withRel("templateDescription")
+                .withType(HttpMethod.GET.name()));
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                        .methodOn(SceneController.class).addScene(sceneId, null))
+                        .withRel("changeDescription")
+                        .withType(HttpMethod.PUT.name()));
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
                 WebMvcLinkBuilder
                         .methodOn(SceneController.class).deleteScene(sceneId))
                         .withRel("deleteScene")
@@ -88,6 +107,56 @@ public class SceneController {
                             .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
                             .withRel("previousScene")
                             .withType(HttpMethod.GET.name())
+            );
+        }
+
+        return ResponseEntity.ok(sceneDto);
+    }
+
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
+    @PutMapping(path = "/{sceneId}")
+    public ResponseEntity<?> updateSceneDescription(@PathVariable String sceneId, @RequestBody SceneDto sceneRequest) throws BadOwnerStoryException {
+        Scene updatedScene = sceneService.updateSceneDescriptionById(sceneId, sceneRequest);
+        SceneDto sceneDto = new SceneDto(updatedScene.getDescription(), updatedScene.getChoices());
+
+        sceneDto = addNextSceneLink(sceneDto);
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).getTemplate())
+                .withRel("templateForAddScene")
+                .withType(HttpMethod.GET.name()));
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).addScene(sceneId, null))
+                .withRel("addNextScene")
+                .withType(HttpMethod.POST.name()));
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).getDescriptionTemplate())
+                .withRel("templateDescription")
+                .withType(HttpMethod.GET.name()));
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).addScene(sceneId, null))
+                .withRel("changeDescription")
+                .withType(HttpMethod.PUT.name()));
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).deleteScene(sceneId))
+                .withRel("deleteScene")
+                .withType(HttpMethod.DELETE.name()));
+
+        if(updatedScene.getPreviousSceneId() != null){
+            sceneDto.add(WebMvcLinkBuilder.linkTo(
+                            WebMvcLinkBuilder
+                                    .methodOn(SceneController.class).getScene(updatedScene.getPreviousSceneId()))
+                    .withRel("previousScene")
+                    .withType(HttpMethod.GET.name())
             );
         }
 
