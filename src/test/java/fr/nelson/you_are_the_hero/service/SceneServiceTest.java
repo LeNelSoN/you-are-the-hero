@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.SceneHasChildrenException;
+import fr.nelson.you_are_the_hero.exception.SceneNotFoundException;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.db.Scene;
@@ -252,4 +253,35 @@ public class SceneServiceTest {
         assertThrows(IllegalArgumentException.class,  () -> sceneService.deleteSceneById(id));
     }
 
+    @Test
+    void testUpdateChoiceDescription_Success() throws BadOwnerStoryException {
+        Scene scene =  new Scene(null, null, "Jean Neige");
+        List<Choice> choices = new ArrayList<>(1);
+        choices.add(new Choice("Choice description", "nextSceneId"));
+        scene.setChoices(choices);
+        Choice choice = new Choice("New description");
+
+        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
+        when(sceneRepository.save(any())).thenReturn(scene);
+
+        Scene updatedScene = sceneService.updateChoiceDescription(scene,"nextSceneId", choice);
+
+        assertNotNull(updatedScene);
+        assertEquals("New description", updatedScene.getChoices().get(0).getDescription());
+        verify(sceneRepository).save(scene);
+    }
+
+    @Test
+    void testUpdateChoiceDescription_SceneNotFound() throws BadOwnerStoryException {
+        Scene scene =  new Scene(null, null, "Jean Neige");
+        List<Choice> choices = new ArrayList<>(1);
+        choices.add(new Choice("Choice description", "nextSceneId"));
+        scene.setChoices(choices);
+        Choice choice = new Choice("New description");
+
+        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
+
+        assertThrows(SceneNotFoundException.class,() -> sceneService.updateChoiceDescription(scene,"wrongNextSceneId", choice));
+        verify(sceneRepository, never()).save(any());
+    }
 }

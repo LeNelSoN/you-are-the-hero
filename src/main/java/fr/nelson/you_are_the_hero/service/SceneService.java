@@ -78,6 +78,14 @@ public class SceneService {
         }
     }
 
+    public Scene updateChoiceDescription(Scene scene, String nextSceneId, Choice requestChoice) throws BadOwnerStoryException {
+        validateAuthor(scene);
+        Choice choice = getChoiceWithNextSceneId(scene, nextSceneId);
+        choice.setDescription(requestChoice.getDescription());
+
+        return sceneRepository.save(scene);
+    }
+
     private Scene getParentScene(String childSceneId) {
 
         Scene childScene = sceneRepository.findById(childSceneId)
@@ -125,4 +133,12 @@ public class SceneService {
     private boolean hasChildScene(String id){
         return sceneRepository.existsByPreviousSceneId(id);
     }
+
+    private Choice getChoiceWithNextSceneId(Scene scene, String nextSceneId) {
+        return scene.getChoices().stream()
+                .filter(choiceElm -> choiceElm.getNextSceneId().equals(nextSceneId))
+                .findFirst()
+                .orElseThrow(() -> new SceneNotFoundException("Scene with this choice doesn't exist"));
+    }
+
 }
