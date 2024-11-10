@@ -1,6 +1,7 @@
 package fr.nelson.you_are_the_hero.service;
 
 import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.db.Role;
@@ -302,4 +303,44 @@ public class UserServiceTest {
         verify(appUserRepository, never()).findByUsername(any());
         verify(appUserRepository, never()).save(any());
     }
+
+    @Test
+    void validateAuthor_Success() {
+        SecurityContextHolder.setContext(securityContext);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("Jean Neige");
+
+        assertDoesNotThrow(() -> userService.validateAuthor("Jean Neige"));
+    }
+
+    @Test
+    void validateAuthor_WithAuthorNull() {
+        assertThrows(IllegalArgumentException.class, () -> userService.validateAuthor(null));
+    }
+
+    @Test
+    void validateAuthor_WithUserNotAuthenticated() {
+        SecurityContextHolder.setContext(securityContext);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(false);
+
+        BadOwnerStoryException exception = assertThrows(BadOwnerStoryException.class, () -> userService.validateAuthor("Jean Neige"));
+        assertEquals("User is not authenticated", exception.getMessage());
+    }
+
+    @Test
+    void validateAuthor_WithUserNotTheAuthor() {
+        SecurityContextHolder.setContext(securityContext);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("Jean Neige");
+
+        BadOwnerStoryException exception = assertThrows(BadOwnerStoryException.class, () -> userService.validateAuthor("Sam Tarly"));
+        assertEquals("User 'Jean Neige' is not the author.", exception.getMessage());
+    }
+
 }

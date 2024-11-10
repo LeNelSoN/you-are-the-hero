@@ -1,6 +1,7 @@
 package fr.nelson.you_are_the_hero.service;
 
 import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.db.Role;
@@ -114,4 +115,22 @@ public class UserService implements UserDetailsService {
         return appUserRepository.save(userToPromote);
     }
 
+    public void validateAuthor(String author) throws BadOwnerStoryException {
+        if (author == null) {
+            throw new IllegalArgumentException("Author cannot be null");
+        }
+
+        String currentUsername = getCurrentUsername();
+
+        if (currentUsername == null || currentUsername.isEmpty()) {
+            throw new BadOwnerStoryException("User is not authenticated");
+        }
+
+        if (!author.equals(currentUsername)) {
+            throw new BadOwnerStoryException(
+                    String.format("User '%s' is not the author.",
+                            currentUsername)
+            );
+        }
+    }
 }
