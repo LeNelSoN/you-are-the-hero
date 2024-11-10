@@ -23,7 +23,10 @@ public class SceneService {
 
     public Scene addNewScene(String parentSceneId, AddSceneDto sceneToAdd) throws BadOwnerStoryException {
         Scene parentScene = getSceneById(parentSceneId);
-        String currentUsername = validateAuthor(parentScene);
+
+        userService.validateAuthor(parentScene.getAuthor());
+
+        String currentUsername = userService.getCurrentUsername();
 
         Scene childScene = createChildScene(sceneToAdd.getDescription(), parentSceneId, currentUsername);
 
@@ -49,7 +52,7 @@ public class SceneService {
         }
 
         Scene sceneToUpdate = getSceneById(id);
-        validateAuthor(sceneToUpdate);
+        userService.validateAuthor(sceneToUpdate.getAuthor());
 
         sceneToUpdate.setDescription(sceneDto.getDescription());
         return sceneRepository.save(sceneToUpdate);
@@ -63,7 +66,7 @@ public class SceneService {
 
         Scene parentScene = getParentScene(id);
 
-        validateAuthor(parentScene);
+        userService.validateAuthor(parentScene.getAuthor());
 
         if(hasChildScene(id)) {
             throw new SceneHasChildrenException("Cannot delete scene with children.");
@@ -79,7 +82,7 @@ public class SceneService {
     }
 
     public Scene updateChoiceDescription(Scene scene, String nextSceneId, Choice requestChoice) throws BadOwnerStoryException {
-        validateAuthor(scene);
+        userService.validateAuthor(scene.getAuthor());
         Choice choice = getChoiceWithNextSceneId(scene, nextSceneId);
         choice.setDescription(requestChoice.getDescription());
 
@@ -103,20 +106,6 @@ public class SceneService {
             sceneRepository.save(parentScene);
         }
 
-    }
-
-    private String validateAuthor(Scene parentScene) throws BadOwnerStoryException {
-        String currentUsername = userService.getCurrentUsername();
-
-        if (currentUsername == null) {
-            throw new BadOwnerStoryException("User is not authenticated.");
-        }
-
-        if(!parentScene.getAuthor().equals(currentUsername)){
-            throw new BadOwnerStoryException("Your are not the author");
-        }
-
-        return currentUsername;
     }
 
     private Scene addChoiceToParentScene(Scene parentScene, String childSceneId, String choiceDescription) {

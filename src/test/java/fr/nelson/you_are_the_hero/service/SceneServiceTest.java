@@ -50,7 +50,6 @@ public class SceneServiceTest {
 
         when(sceneRepository.findById(parentId)).thenReturn(Optional.of(parentScene));
         when(sceneRepository.save(any(Scene.class))).thenReturn(childScene).thenReturn(parentScene);
-        when(userService.getCurrentUsername()).thenReturn(author);
 
         // Act
         Scene result = sceneService.addNewScene(parentId, sceneToAdd);
@@ -74,26 +73,6 @@ public class SceneServiceTest {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> sceneService.addNewScene(parentId, sceneToAdd));
-    }
-
-    @Test
-    void testAddNewScene_WrongAuthor() {
-        String author = "Jean Neige";
-        String parentId = "parent123";
-
-        AddSceneDto sceneToAdd = new AddSceneDto("New scene description", "New choice");
-
-        Scene parentScene = new Scene("Parent scene", null, author);
-        parentScene.setId(parentId);
-
-        Scene childScene = new Scene("New scene description", parentId);
-        childScene.setId("child456");
-
-        when(sceneRepository.findById(parentId)).thenReturn(Optional.of(parentScene));
-        when(userService.getCurrentUsername()).thenReturn("Cercei Lannister");
-
-        assertThrows(BadOwnerStoryException.class, () -> sceneService.addNewScene(parentId, sceneToAdd));
-        verify(sceneRepository, never()).save(any(Scene.class));
     }
 
     @Test
@@ -133,7 +112,6 @@ public class SceneServiceTest {
         String sceneId = "idScene1234";
 
         when(sceneRepository.findById(sceneId)).thenReturn(Optional.of(scene));
-        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
         when(sceneRepository.save(any(Scene.class))).thenReturn(scene);
 
         Scene updatedScene = sceneService.updateSceneDescriptionById(sceneId, sceneDto);
@@ -142,22 +120,6 @@ public class SceneServiceTest {
         assertEquals("updated description", updatedScene.getDescription());
 
         verify(sceneRepository,  times(1)).save(any(Scene.class));
-    }
-
-    @Test
-    void testUpdateSceneDescriptionById_InvalidAuthor(){
-        SceneDto sceneDto = new SceneDto();
-        sceneDto.setDescription("updated description");
-        Scene scene = new Scene("description", null, "Jean Neige");
-
-        when(sceneRepository.findById(any())).thenReturn(Optional.of(scene));
-        when(userService.getCurrentUsername()).thenReturn("wrong author");
-
-        assertThrows(BadOwnerStoryException.class, () -> {
-            sceneService.updateSceneDescriptionById("sceneId", sceneDto);
-        });
-
-        verify(sceneRepository, never()).save(any());
     }
 
     @ParameterizedTest
@@ -198,7 +160,6 @@ public class SceneServiceTest {
 
         when(sceneRepository.findById("childSceneId1234")).thenReturn(Optional.of(childScene));
         when(sceneRepository.findById(childScene.getPreviousSceneId())).thenReturn(Optional.of(parentScene));
-        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
         when(sceneRepository.existsByPreviousSceneId("childSceneId1234")).thenReturn(false);
 
         sceneService.deleteSceneById("childSceneId1234");
@@ -223,27 +184,9 @@ public class SceneServiceTest {
 
         when(sceneRepository.findById("childSceneId1234")).thenReturn(Optional.of(childScene));
         when(sceneRepository.findById(childScene.getPreviousSceneId())).thenReturn(Optional.of(parentScene));
-        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
         when(sceneRepository.existsByPreviousSceneId("childSceneId1234")).thenReturn(true);
 
         assertThrows(SceneHasChildrenException.class,  () -> sceneService.deleteSceneById("childSceneId1234"));
-    }
-
-    @Test
-    void testDeleteSceneById_WithWrongAuthor() throws BadOwnerStoryException {
-        Scene parentScene = new Scene("Description", null,  "Jean Neige");
-        parentScene.setId("parentSceneId1234");
-
-        Scene childScene = new Scene("Child Description", "parentSceneId1234",  "Jean Neige");
-        childScene.setId("childSceneId1234");
-
-        parentScene.setChoices(new ArrayList<>(List.of(new Choice("Choice Description", "childSceneId1234"))));
-
-        when(sceneRepository.findById("childSceneId1234")).thenReturn(Optional.of(childScene));
-        when(sceneRepository.findById(childScene.getPreviousSceneId())).thenReturn(Optional.of(parentScene));
-        when(userService.getCurrentUsername()).thenReturn("Sam Tarly");
-
-        assertThrows(BadOwnerStoryException.class,  () -> sceneService.deleteSceneById("childSceneId1234"));
     }
 
     @ParameterizedTest
@@ -261,7 +204,6 @@ public class SceneServiceTest {
         scene.setChoices(choices);
         Choice choice = new Choice("New description");
 
-        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
         when(sceneRepository.save(any())).thenReturn(scene);
 
         Scene updatedScene = sceneService.updateChoiceDescription(scene,"nextSceneId", choice);
@@ -278,8 +220,6 @@ public class SceneServiceTest {
         choices.add(new Choice("Choice description", "nextSceneId"));
         scene.setChoices(choices);
         Choice choice = new Choice("New description");
-
-        when(userService.getCurrentUsername()).thenReturn("Jean Neige");
 
         assertThrows(SceneNotFoundException.class,() -> sceneService.updateChoiceDescription(scene,"wrongNextSceneId", choice));
         verify(sceneRepository, never()).save(any());
