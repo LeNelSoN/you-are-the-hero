@@ -97,11 +97,27 @@ public class AuthenticationController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) throws Exception {
         MessageDto messageDto = new MessageDto();
+        MessageDto messageDtoTokenExpired=new MessageDto();
+
         messageDto.add(WebMvcLinkBuilder
                 .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
                 .withRel("authUser")
                 .withType(HttpMethod.POST.name()));
 
+        messageDtoTokenExpired.add(WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).refreshToken(null))
+                .withRel("refreshToken")
+                .withType(HttpMethod.POST.name()));
+
+        try{
+            AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
+            return ResponseEntity.ok(newAccessToken);
+        } catch (InvalidTokenException e) {
+            messageDto.setMessage("Invalid refresh token: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(messageDto);
+        } catch (TokenExpiredException e) {
+            messageDtoTokenExpired.setMessage("Token expired: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(messageDtoTokenExpired);
             AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
             return ResponseEntity.ok(newAccessToken);
     }
