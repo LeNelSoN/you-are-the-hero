@@ -12,6 +12,10 @@ public class Choice {
         this.nextSceneId = nextSceneId;
     }
 
+    public Choice(String description) {
+        this.description = description;
+    }
+
     public String getDescription() {
         return description;
     }

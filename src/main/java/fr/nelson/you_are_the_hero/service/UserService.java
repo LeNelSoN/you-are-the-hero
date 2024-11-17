@@ -1,16 +1,26 @@
 package fr.nelson.you_are_the_hero.service;
 
+import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.UserAllreadyExistException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
+import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
+import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.repository.AppUserRepository;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 import static fr.nelson.you_are_the_hero.model.db.Role.PLAYER;
 
@@ -30,6 +40,12 @@ public class UserService implements UserDetailsService {
                 .password(appUser.getPassword())
                 .roles(appUser.getRole().name())
                 .build();
+    }
+
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        return StringUtils.defaultString(authentication != null && authentication.isAuthenticated() ? authentication.getName() : null);
     }
 
     public AppUser saveUser(AuthRequestDto authRequestDto) throws UserAllreadyExistException {
@@ -54,4 +70,67 @@ public class UserService implements UserDetailsService {
         return appUser;
     }
 
+    public AppUser createAdminUser(UserDto UserDto) throws AdminAlreadyExistException, UsernameNotFoundException{
+        if(isAlreadyAnAdmin()){
+            throw new AdminAlreadyExistException("Admin allready exist");
+        }
+
+        AppUser appUser = appUserRepository.findByUsername(UserDto.getUsername());
+
+        if(appUser == null) {
+            throw new UsernameNotFoundException("User Not Found");
+        }
+
+        appUser.setRole(Role.ADMIN);
+
+        return appUserRepository.save(appUser);
+    }
+
+    public boolean isAlreadyAnAdmin() {
+        return appUserRepository.existsByRole(Role.ADMIN);
+    }
+
+    public void deleteByUsername(String username, User userConnected) throws BadRequestException {
+        if(StringUtils.isEmpty(username) || Objects.isNull(userConnected) || StringUtils.isEmpty(userConnected.getUsername())) {
+            throw new BadRequestException("EMPTY_PARAMETER");
+        }
+        AppUser user = this.appUserRepository.findByUsername(userConnected.getUsername());
+        if(user.getUsername().equals(username) || Role.ADMIN.name().equals(user.getRole().name())) {
+            user.setDeleted(true);
+            this.appUserRepository.save(user);
+        }
+    }
+
+    public AppUser promoteUserToEditor(String username) throws BadRequestException {
+        if(StringUtils.isEmpty(username)) {
+            throw new BadRequestException("EMPTY_PARAMETER");
+        }
+
+        AppUser userToPromote = findAppUserByUsername(username);
+        if (userToPromote.getRole() == Role.EDITOR) {
+            throw new BadRequestException("USER_ALREADY_EDITOR");
+        }
+
+        userToPromote.setRole(Role.EDITOR);
+        return appUserRepository.save(userToPromote);
+    }
+
+    public void validateAuthor(String author) throws BadOwnerStoryException {
+        if (author == null) {
+            throw new IllegalArgumentException("Author cannot be null");
+        }
+
+        String currentUsername = getCurrentUsername();
+
+        if (currentUsername == null || currentUsername.isEmpty()) {
+            throw new BadOwnerStoryException("User is not authenticated");
+        }
+
+        if (!author.equals(currentUsername)) {
+            throw new BadOwnerStoryException(
+                    String.format("User '%s' is not the author.",
+                            currentUsername)
+            );
+        }
+    }
 }

@@ -1,6 +1,8 @@
 package fr.nelson.you_are_the_hero.configuration;
 
+import fr.nelson.you_are_the_hero.filter.ApiKeyAuthenticationFilter;
 import fr.nelson.you_are_the_hero.filter.AuthenticationFilter;
+import fr.nelson.you_are_the_hero.service.ApiKeyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,14 +25,19 @@ public class SecurityConfig {
 
     @Autowired
     @Lazy
+    ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+
+    @Autowired
+    @Lazy
     private AuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                         authorizationManagerRequestMatcherRegistry
-                                .requestMatchers("/","/auth/**").permitAll()
+                                .requestMatchers("/", "/auth/**", "/story/**", "/scene/**", "/game/**").permitAll()
                                 .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

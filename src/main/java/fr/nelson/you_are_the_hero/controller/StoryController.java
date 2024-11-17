@@ -1,8 +1,8 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
-import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.StoryDto;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.StoryTemplateDto;
@@ -27,6 +27,7 @@ public class StoryController {
     @Autowired
     StoryService storyService;
 
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @GetMapping(path = "/template")
     public ResponseEntity<StoryTemplateDto> getTemplate(){
         StoryTemplateDto template = new StoryTemplateDto("Your Story title", "A description of your story");
@@ -34,12 +35,16 @@ public class StoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StoryDto>> getAllStory(){
+    public ResponseEntity<List<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
         List<Story> allStory = storyService.getAllStory();
         List<StoryDto> storyDtoList = new ArrayList<>();
         for(Story story: allStory){
             StoryDto storyDto = new StoryDto(story.getTitle(), story.getDescription());
-            storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).play(story.getFirstSceneId())).withRel("startStory").withType(HttpMethod.GET.name()));
+            if(story.getFirstSceneId() != null) {
+                storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).play(story.getFirstSceneId())).withRel("startStory").withType(HttpMethod.GET.name()));
+            } else {
+                storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).addFirstSceneToStory(story.getId(), null, null)).withRel("addFirstScene").withType(HttpMethod.POST.name()));
+            }
             storyDtoList.add(storyDto);
         }
         return ResponseEntity.ok(storyDtoList);
@@ -56,12 +61,11 @@ public class StoryController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("An unexpected error occurred on the server. Please try again later.");
         }
-
     }
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping
-    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication){
+    public ResponseEntity<MessageDto> createStory(@RequestBody Story story, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
         User user = (User) authentication.getPrincipal();
         story.setCreatedBy(user.getUsername());
         Story newStory = storyService.createNewStory(story);
@@ -73,20 +77,13 @@ public class StoryController {
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping(path = "/{storyId}/scene")
-    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication){
-        try{
+    public ResponseEntity<?> addFirstSceneToStory(@PathVariable String storyId, @RequestBody Scene scene, Authentication authentication) throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
+
             User user = (User) authentication.getPrincipal();
             Story updatedStory = storyService.addSceneToStory(storyId, scene, user.getUsername());
             StoryDto storyDto = new StoryDto(updatedStory.getTitle(), updatedStory.getDescription());
             storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).getScene(updatedStory.getFirstSceneId())).withRel("getFirstScene").withType(HttpMethod.GET.name()));
             return ResponseEntity.ok(storyDto);
-        } catch (SceneAlreadyExistsException e) {
-            return ResponseEntity.status(409).body("The first scene already exists and cannot be overwritten.");
-        } catch (StoryNotFoundException e){
-            return ResponseEntity.status(404).body("Sorry, story not found");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("An unexpected error occurred on the server. Please try again later.");
-        }
 
     }
 

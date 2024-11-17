@@ -1,5 +1,7 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import fr.nelson.you_are_the_hero.exception.InvalidCredentialsException;
+import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
 import fr.nelson.you_are_the_hero.exception.InvalidTokenException;
 import fr.nelson.you_are_the_hero.exception.TokenExpiredException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
@@ -11,13 +13,18 @@ import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.model.dto.template.UserTemplateDto;
 import fr.nelson.you_are_the_hero.service.AuthenticationService;
 import fr.nelson.you_are_the_hero.service.UserService;
+import org.springframework.data.mongodb.repository.Update;
+import org.springframework.http.HttpStatus;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,7 +40,7 @@ public class AuthenticationController {
     private UserService userService;
 
     @GetMapping("/info")
-    public  ResponseEntity<MessageDto> getInfo(){
+    public  ResponseEntity<MessageDto> getInfo() throws InvalidCredentialsException, BadRequestException {
         MessageDto message = new MessageDto("Links for account creation and authentication");
 
         message.add(
@@ -67,18 +74,15 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody AuthRequestDto authRequest) {
-        try {
-            return ResponseEntity.ok(authenticationService.authenticateUser(authRequest.getUsername(), authRequest.getPassword()));
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid username or password" + e.getMessage());
-        }
+    public ResponseEntity<?> authenticateUser(@RequestBody AuthRequestDto authRequest) throws InvalidCredentialsException, BadRequestException {
+
+            return ResponseEntity.ok(authenticationService.
+                    authenticateUser(authRequest.getUsername(), authRequest.getPassword()));
     }
-
+    
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody AuthRequestDto authRequestDto) {
+    public ResponseEntity<?> registerUser(@RequestBody AuthRequestDto authRequestDto) throws InvalidCredentialsException, BadRequestException {
 
-        try{
             AppUser registredUser = userService.saveUser(authRequestDto);
             UserDto userDto = new UserDto(registredUser.getUsername());
             userDto.add(WebMvcLinkBuilder
@@ -87,13 +91,11 @@ public class AuthenticationController {
                     .withType(HttpMethod.POST.name())
             );
             return ResponseEntity.ok(userDto);
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body("An error occurred while registering the user: " + e.getMessage());
-        }
+
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) throws Exception {
         MessageDto messageDto = new MessageDto();
         MessageDto messageDtoTokenExpired=new MessageDto();
 
@@ -116,13 +118,39 @@ public class AuthenticationController {
         } catch (TokenExpiredException e) {
             messageDtoTokenExpired.setMessage("Token expired: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(messageDtoTokenExpired);
+            AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
+            return ResponseEntity.ok(newAccessToken);
+    }
+
+    @PostMapping("/admin")
+    public ResponseEntity<?> createAdmin(@RequestBody UserDto userDto){
+        MessageDto messageDto = new MessageDto();
+        try{
+            AppUser appUser = userService.createAdminUser(userDto);
+            messageDto.setMessage(appUser.getUsername() + " is now an admin");
+            return ResponseEntity.ok(messageDto);
+        } catch (AdminAlreadyExistException e) {
+            messageDto.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(messageDto);
         } catch (UsernameNotFoundException e) {
-            messageDto.setMessage("User not found: " + e.getMessage());
+            messageDto.setMessage(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
 
+    }
+
+    @PatchMapping("/editor/{username}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<AppUser> updateUserRoleToEditor(@PathVariable String username) throws BadRequestException {
+        AppUser promotedUser = this.userService.promoteUserToEditor(username);
+        return ResponseEntity.ok(promotedUser);
+    }
+
+    @DeleteMapping("/users/{username}")
+    @PreAuthorize("hasRole('ROLE_PLAYER')")
+    public ResponseEntity<?> deleteUser(@PathVariable String username, Authentication authentication) throws BadRequestException {
+        this.userService.deleteByUsername(username, (User) authentication.getPrincipal());
+        return ResponseEntity.noContent().build();
     }
 
 }

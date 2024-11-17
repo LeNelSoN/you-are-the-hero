@@ -5,6 +5,9 @@ import org.springframework.hateoas.RepresentationModel;
 public class UserDto  extends RepresentationModel<StoryDto> {
     String username;
 
+    public UserDto() {
+    }
+
     public UserDto(String username) {
         this.username = username;
     }

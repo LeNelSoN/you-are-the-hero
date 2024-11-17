@@ -1,4 +1,5 @@
 package fr.nelson.you_are_the_hero.service;
+import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
 import fr.nelson.you_are_the_hero.model.db.Scene;
@@ -52,7 +53,7 @@ public class StoryServiceTest {
     }
 
     @Test
-    public void testAddSceneToStory_Success() throws SceneAlreadyExistsException, StoryNotFoundException {
+    public void testAddSceneToStory_Success() throws SceneAlreadyExistsException, StoryNotFoundException, BadOwnerStoryException {
         // Arrange
         String storyId = "story1";
         Scene scene = new Scene();
@@ -73,6 +74,7 @@ public class StoryServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(scene.getId(), result.getFirstSceneId());
+        assertEquals("username", scene.getAuthor());
         verify(storyRepository, times(1)).save(story);
         verify(sceneRepository, times(1)).save(scene);
     }
@@ -97,7 +99,7 @@ public class StoryServiceTest {
         });
 
         // Vérif
-        assertEquals("The first scene is already exist", exception.getMessage());
+        assertEquals("The first scene already exists", exception.getMessage());
         verify(storyRepository, never()).save(any());
     }
 
