@@ -95,10 +95,18 @@ public class AuthenticationController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
         MessageDto messageDto = new MessageDto();
+        MessageDto messageDtoTokenExpired=new MessageDto();
+
         messageDto.add(WebMvcLinkBuilder
                 .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
                 .withRel("authUser")
                 .withType(HttpMethod.POST.name()));
+
+        messageDtoTokenExpired.add(WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).refreshToken(null))
+                .withRel("refreshToken")
+                .withType(HttpMethod.POST.name()));
+
         try{
             AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
             return ResponseEntity.ok(newAccessToken);
@@ -106,8 +114,8 @@ public class AuthenticationController {
             messageDto.setMessage("Invalid refresh token: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(messageDto);
         } catch (TokenExpiredException e) {
-            messageDto.setMessage("Token expired: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(messageDto);
+            messageDtoTokenExpired.setMessage("Token expired: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(messageDtoTokenExpired);
         } catch (UsernameNotFoundException e) {
             messageDto.setMessage("User not found: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
