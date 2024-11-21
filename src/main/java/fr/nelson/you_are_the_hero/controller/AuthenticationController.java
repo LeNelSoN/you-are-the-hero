@@ -2,23 +2,19 @@ package fr.nelson.you_are_the_hero.controller;
 
 import fr.nelson.you_are_the_hero.exception.InvalidCredentialsException;
 import fr.nelson.you_are_the_hero.exception.AdminAlreadyExistException;
-import fr.nelson.you_are_the_hero.exception.InvalidTokenException;
-import fr.nelson.you_are_the_hero.exception.TokenExpiredException;
 import fr.nelson.you_are_the_hero.model.db.AppUser;
 import fr.nelson.you_are_the_hero.model.dto.AuthRequestDto;
 import fr.nelson.you_are_the_hero.model.dto.AuthResponseDto;
 import fr.nelson.you_are_the_hero.model.dto.RefreshTokenDto;
 import fr.nelson.you_are_the_hero.model.dto.UserDto;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
-import fr.nelson.you_are_the_hero.model.dto.template.UserTemplateDto;
+import fr.nelson.you_are_the_hero.model.hateoas.LinkType;
 import fr.nelson.you_are_the_hero.service.AuthenticationService;
 import fr.nelson.you_are_the_hero.service.UserService;
-import org.springframework.data.mongodb.repository.Update;
 import org.springframework.http.HttpStatus;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,65 +41,49 @@ public class AuthenticationController {
 
         message.add(
                 WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).getTemplate())
-                        .withRel("userTemplate")
-                        .withType(HttpMethod.GET.name())
-        );
-
-        message.add(
-                WebMvcLinkBuilder
                         .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
-                        .withRel("authUser")
-                        .withType(HttpMethod.POST.name())
+                        .withRel(LinkType.AUTH_USER.REL)
+                        .withType(LinkType.AUTH_USER.METHOD.name())
         );
+        message.addDocumentation(LinkType.AUTH_USER);
 
         message.add(
                 WebMvcLinkBuilder
                         .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).registerUser(null))
-                        .withRel("register")
-                        .withType(HttpMethod.POST.name())
+                        .withRel(LinkType.REGISTER_USER.REL)
+                        .withType(LinkType.REGISTER_USER.METHOD.name())
         );
+        message.addDocumentation(LinkType.REGISTER_USER);
 
         return ResponseEntity.ok(message);
     }
 
-    @GetMapping(path = "/template")
-    public ResponseEntity<UserTemplateDto> getTemplate(){
-        UserTemplateDto template = new UserTemplateDto("Your Story username", "Your protected password");
-        return ResponseEntity.ok(template);
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody AuthRequestDto authRequest) throws InvalidCredentialsException, BadRequestException {
-
-            return ResponseEntity.ok(authenticationService.
-                    authenticateUser(authRequest.getUsername(), authRequest.getPassword()));
+    public ResponseEntity<AuthResponseDto> authenticateUser(@RequestBody AuthRequestDto authRequest) throws InvalidCredentialsException, BadRequestException {
+        return ResponseEntity.ok(authenticationService.
+                authenticateUser(authRequest.getUsername(), authRequest.getPassword()));
     }
     
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody AuthRequestDto authRequestDto) throws InvalidCredentialsException, BadRequestException {
+    public ResponseEntity<MessageDto> registerUser(@RequestBody AuthRequestDto authRequestDto) throws InvalidCredentialsException, BadRequestException {
+        AppUser registeredUser = userService.saveUser(authRequestDto);
+        MessageDto message = new MessageDto("Your account has been successfully created, " + registeredUser.getUsername() + ", you can now log in.");
 
-            AppUser registredUser = userService.saveUser(authRequestDto);
-            UserDto userDto = new UserDto(registredUser.getUsername());
-            userDto.add(WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
-                    .withRel("authUser")
-                    .withType(HttpMethod.POST.name())
-            );
-            return ResponseEntity.ok(userDto);
+        message.add(
+                WebMvcLinkBuilder
+                        .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
+                        .withRel(LinkType.AUTH_USER.REL)
+                        .withType(LinkType.AUTH_USER.METHOD.name())
+        );
+        message.addDocumentation(LinkType.AUTH_USER);
 
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) throws Exception {
-        MessageDto messageDto = new MessageDto();
-        messageDto.add(WebMvcLinkBuilder
-                .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).authenticateUser(null))
-                .withRel("authUser")
-                .withType(HttpMethod.POST.name()));
-
-            AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
-            return ResponseEntity.ok(newAccessToken);
+    public ResponseEntity<AuthResponseDto> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) throws Exception {
+        AuthResponseDto newAccessToken = authenticationService.refreshAccessToken(refreshTokenDto.getToken());
+        return ResponseEntity.ok(newAccessToken);
     }
 
     @PostMapping("/admin")
@@ -120,7 +100,6 @@ public class AuthenticationController {
             messageDto.setMessage(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(messageDto);
         }
-
     }
 
     @PatchMapping("/editor/{username}")

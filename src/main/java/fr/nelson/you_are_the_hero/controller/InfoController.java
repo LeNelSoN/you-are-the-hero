@@ -7,10 +7,10 @@ import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
 import fr.nelson.you_are_the_hero.model.db.Role;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
 import fr.nelson.you_are_the_hero.service.AuthenticationService;
+import fr.nelson.you_are_the_hero.model.hateoas.LinkType;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -32,34 +32,28 @@ public class InfoController {
         message.add(
                 WebMvcLinkBuilder
                         .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class).getInfo())
-                        .withRel("authenticationInfo")
-                        .withType(HttpMethod.GET.name())
+                        .withRel(LinkType.AUTH_INFO.REL)
+                        .withType(LinkType.AUTH_INFO.METHOD.name())
         );
+        message.addDocumentation(LinkType.AUTH_INFO);
 
         message.add(
                 WebMvcLinkBuilder
                         .linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).getAllStory())
-                        .withRel("getAllStory")
-                        .withType(HttpMethod.GET.name())
+                        .withRel(LinkType.GET_ALL_STORIES.REL)
+                        .withType(LinkType.GET_ALL_STORIES.METHOD.name())
         );
+        message.addDocumentation(LinkType.GET_ALL_STORIES);
 
         if(authenticationService.hasRole(Role.EDITOR)){
             message.add(
                     WebMvcLinkBuilder
-                            .linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).getTemplate())
-                            .withRel("getStoryTemplate")
-                            .withType(HttpMethod.GET.name())
-            );
-
-            message.add(
-                    WebMvcLinkBuilder
                             .linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).createStory(null, null))
-                            .withRel("createStory")
-                            .withType(HttpMethod.POST.name())
+                            .withRel(LinkType.CREATE_STORY.REL)
+                            .withType(LinkType.CREATE_STORY.METHOD.name())
             );
-
+            message.addDocumentation(LinkType.CREATE_STORY);
         }
-
         return ResponseEntity.ok(message);
     }
 }

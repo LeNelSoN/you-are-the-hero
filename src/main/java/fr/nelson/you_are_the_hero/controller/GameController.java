@@ -26,7 +26,13 @@ public class GameController {
         GameDto gameDto = new GameDto(scene.getDescription());
 
         for(Choice choice: scene.getChoices()){
-            gameDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).play(choice.getNextSceneId())).withRel("next").withTitle(choice.getDescription()).withType(HttpMethod.GET.name()));
+            gameDto.add(WebMvcLinkBuilder.linkTo(
+                    WebMvcLinkBuilder
+                            .methodOn(GameController.class)
+                            .play(choice.getNextSceneId()))
+                    .withRel("next")
+                    .withTitle(choice.getDescription())
+                    .withType(HttpMethod.GET.name()));
         }
 
         return ResponseEntity.ok(gameDto);

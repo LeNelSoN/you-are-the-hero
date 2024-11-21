@@ -1,6 +1,6 @@
 package fr.nelson.you_are_the_hero.model.dto.template;
 
-public class AddSceneTemplateDto {
+public class AddSceneTemplateDto extends TemplateDTO<AddSceneTemplateDto>{
     private String description;
     private String choice;
 
@@ -26,5 +26,13 @@ public class AddSceneTemplateDto {
 
     public void setChoice(String choice) {
         this.choice = choice;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "description='" + description + '\'' +
+                ", choice='" + choice + '\'' +
+                '}';
     }
 }

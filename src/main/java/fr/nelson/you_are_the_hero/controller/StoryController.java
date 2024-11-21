@@ -5,9 +5,9 @@ import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
 import fr.nelson.you_are_the_hero.model.dto.StoryDto;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
-import fr.nelson.you_are_the_hero.model.dto.template.StoryTemplateDto;
 import fr.nelson.you_are_the_hero.model.db.Scene;
 import fr.nelson.you_are_the_hero.model.db.Story;
+import fr.nelson.you_are_the_hero.model.hateoas.LinkType;
 import fr.nelson.you_are_the_hero.service.StoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -26,13 +26,6 @@ import java.util.List;
 public class StoryController {
     @Autowired
     StoryService storyService;
-
-    @PreAuthorize("hasRole('ROLE_EDITOR')")
-    @GetMapping(path = "/template")
-    public ResponseEntity<StoryTemplateDto> getTemplate(){
-        StoryTemplateDto template = new StoryTemplateDto("Your Story title", "A description of your story");
-        return ResponseEntity.ok(template);
-    }
 
     @GetMapping
     public ResponseEntity<List<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
@@ -70,8 +63,16 @@ public class StoryController {
         story.setCreatedBy(user.getUsername());
         Story newStory = storyService.createNewStory(story);
         MessageDto message = new MessageDto("Your story is ready, now add some scenes.");
-        message.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).addFirstSceneToStory(newStory.getId(), null, authentication)).withRel("addFirstScene").withType(HttpMethod.POST.name()));
-        message.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).getFirstSceneTemplate()).withRel("getFirstSceneTemplate").withType(HttpMethod.GET.name()));
+        message.add(
+                WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(StoryController.class)
+                                .addFirstSceneToStory(newStory.getId(), null, authentication))
+                        .withRel(LinkType.ADD_FIRST_SCENE.REL)
+                        .withType(LinkType.ADD_FIRST_SCENE.METHOD.name()));
+
+        message.addDocumentation(LinkType.ADD_FIRST_SCENE);
+
         return ResponseEntity.ok(message);
     }
 

@@ -4,7 +4,7 @@ import org.springframework.hateoas.RepresentationModel;
 
 import java.util.Map;
 
-public class SceneTemplateDto {
+public class SceneTemplateDto extends TemplateDTO<SceneTemplateDto> {
     private String description;
 
     public SceneTemplateDto(String description) {
@@ -19,4 +19,10 @@ public class SceneTemplateDto {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "'description': '" + description + '\'' +
+                '}';
+    }
 }
