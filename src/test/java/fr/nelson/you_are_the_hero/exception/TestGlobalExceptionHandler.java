@@ -25,7 +25,7 @@ public class TestGlobalExceptionHandler {
     private WebRequest mockWebRequest;
 
     @Test
-    public void testHandleTokenExpiredException() {
+    public void testHandleTokenExpiredException() throws Exception {
         String message = "Token has expired";
         TokenExpiredException tokenExpiredException = new TokenExpiredException(message);
         Mockito.when(mockWebRequest.getDescription(false)).thenReturn("uri=/test/tokenExpiredException");
