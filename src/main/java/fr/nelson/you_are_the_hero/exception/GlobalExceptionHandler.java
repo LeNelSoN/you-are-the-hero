@@ -1,5 +1,8 @@
 package fr.nelson.you_are_the_hero.exception;
 
+import fr.nelson.you_are_the_hero.controller.AuthenticationController;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,9 +23,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TokenExpiredException.class)
-    public ResponseEntity<ErrorDetails> handleTokenExpiredException(TokenExpiredException ex, WebRequest request) {
-        return createErrorResponse(ex,HttpStatus.UNAUTHORIZED, request);
-    }
+    public ResponseEntity<ErrorDetails> handleTokenExpiredException(TokenExpiredException ex, WebRequest request) throws Exception {
+        ErrorDetails errorDetails=new ErrorDetails(ex.getMessage(),request.getDescription(false));
+        errorDetails.setMessage(WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder.methodOn(AuthenticationController.class)
+                        .refreshToken(null)).withRel("refreshToken").withType(HttpMethod.POST.toString()).toString());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorDetails);
+
+        }
 
     @ExceptionHandler(UserAllreadyExistException.class)
     public ResponseEntity<ErrorDetails> handleUserAllreadyExistException(UserAllreadyExistException ex, WebRequest request) {
