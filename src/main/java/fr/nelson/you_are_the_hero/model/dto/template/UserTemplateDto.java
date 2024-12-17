@@ -1,8 +1,6 @@
 package fr.nelson.you_are_the_hero.model.dto.template;
 
-import org.springframework.hateoas.RepresentationModel;
-
-public class UserTemplateDto extends RepresentationModel<UserTemplateDto> {
+public class UserTemplateDto extends TemplateDTO<UserTemplateDto> {
     private String username;
     private String password;
 
@@ -25,5 +23,13 @@ public class UserTemplateDto extends RepresentationModel<UserTemplateDto> {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "'username': '" + username + '\'' +
+                ", 'password': '" + password +
+                '}';
     }
 }

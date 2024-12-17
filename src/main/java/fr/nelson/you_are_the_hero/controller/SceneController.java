@@ -5,18 +5,15 @@ import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.dto.AddSceneDto;
 import fr.nelson.you_are_the_hero.model.dto.SceneDto;
 import fr.nelson.you_are_the_hero.model.dto.message.MessageDto;
-import fr.nelson.you_are_the_hero.model.dto.template.AddSceneTemplateDto;
 import fr.nelson.you_are_the_hero.model.dto.template.SceneTemplateDto;
 import fr.nelson.you_are_the_hero.model.db.Scene;
+import fr.nelson.you_are_the_hero.model.hateoas.LinkType;
 import fr.nelson.you_are_the_hero.service.SceneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "/scene")
@@ -32,35 +29,13 @@ public class SceneController {
     }
 
     @PreAuthorize("hasRole('ROLE_EDITOR')")
-    @GetMapping(path = "/template/changeDescription")
-    public ResponseEntity<SceneTemplateDto> getDescriptionTemplate(){
-        SceneTemplateDto template = new SceneTemplateDto("A new description of your scene");
-        return ResponseEntity.ok(template);
-    }
-
-    @PreAuthorize("hasRole('ROLE_EDITOR')")
-    @GetMapping(path = "/template")
-    public ResponseEntity<AddSceneTemplateDto> getTemplate(){
-        AddSceneTemplateDto template = new AddSceneTemplateDto("A description of your scene", "The description of the choice");
-        return ResponseEntity.ok(template);
-    }
-
-    @PreAuthorize("hasRole('ROLE_EDITOR')")
     @PostMapping(path = "/{parentSceneId}")
     public ResponseEntity<SceneDto> addScene(@PathVariable String parentSceneId, @RequestBody AddSceneDto childScene) throws BadOwnerStoryException {
         Scene scene = sceneService.addNewScene(parentSceneId, childScene);
         SceneDto sceneDto = new SceneDto(scene.getDescription(), scene.getChoices());
 
         addNextSceneLink(sceneDto);
-
-        if(scene.getPreviousSceneId() != null){
-            sceneDto.add(WebMvcLinkBuilder.linkTo(
-                    WebMvcLinkBuilder
-                            .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
-                            .withRel("previousScene")
-                            .withType(HttpMethod.GET.name())
-            );
-        }
+        addPreviousSceneLink(sceneDto, scene);
 
         return ResponseEntity.ok(sceneDto);
     }
@@ -72,46 +47,9 @@ public class SceneController {
         SceneDto sceneDto = new SceneDto(scene.getDescription(), scene.getChoices());
 
         addNextSceneLink(sceneDto);
+        addPreviousSceneLink(sceneDto, scene);
+        addActionLinks(sceneId, sceneDto);
         addUpdateChoiceDescriptionLink(sceneId, sceneDto);
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                WebMvcLinkBuilder
-                        .methodOn(SceneController.class).getTemplate())
-                        .withRel("templateForAddScene")
-                        .withType(HttpMethod.GET.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                WebMvcLinkBuilder
-                        .methodOn(SceneController.class).addScene(sceneId, null))
-                        .withRel("addNextScene")
-                        .withType(HttpMethod.POST.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).getDescriptionTemplate())
-                .withRel("templateDescription")
-                .withType(HttpMethod.GET.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                        .methodOn(SceneController.class).updateSceneDescription(sceneId, null))
-                        .withRel("changeDescription")
-                        .withType(HttpMethod.PUT.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                WebMvcLinkBuilder
-                        .methodOn(SceneController.class).deleteScene(sceneId))
-                        .withRel("deleteScene")
-                        .withType(HttpMethod.DELETE.name()));
-
-        if(scene.getPreviousSceneId() != null){
-            sceneDto.add(WebMvcLinkBuilder.linkTo(
-                    WebMvcLinkBuilder
-                            .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
-                            .withRel("previousScene")
-                            .withType(HttpMethod.GET.name())
-            );
-        }
 
         return ResponseEntity.ok(sceneDto);
     }
@@ -126,46 +64,8 @@ public class SceneController {
         SceneDto sceneDto = new SceneDto(updatedScene.getDescription(), updatedScene.getChoices());
 
         addNextSceneLink(sceneDto);
-        addUpdateChoiceDescriptionLink(sceneId, sceneDto);
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).getTemplate())
-                .withRel("templateForAddScene")
-                .withType(HttpMethod.GET.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).addScene(sceneId, null))
-                .withRel("addNextScene")
-                .withType(HttpMethod.POST.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).getDescriptionTemplate())
-                .withRel("templateDescription")
-                .withType(HttpMethod.GET.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).updateSceneDescription(sceneId, null))
-                .withRel("changeDescription")
-                .withType(HttpMethod.PUT.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).deleteScene(sceneId))
-                .withRel("deleteScene")
-                .withType(HttpMethod.DELETE.name()));
-
-        if(updatedScene.getPreviousSceneId() != null){
-            sceneDto.add(WebMvcLinkBuilder.linkTo(
-                            WebMvcLinkBuilder
-                                    .methodOn(SceneController.class).getScene(updatedScene.getPreviousSceneId()))
-                    .withRel("previousScene")
-                    .withType(HttpMethod.GET.name())
-            );
-        }
+        addPreviousSceneLink(sceneDto, updatedScene);
+        addActionLinks(sceneId, sceneDto);
 
         return ResponseEntity.ok(sceneDto);
     }
@@ -177,46 +77,9 @@ public class SceneController {
         SceneDto sceneDto = new SceneDto(updatedScene.getDescription(), updatedScene.getChoices());
 
         addNextSceneLink(sceneDto);
+        addPreviousSceneLink(sceneDto, updatedScene);
+        addActionLinks(sceneId, sceneDto);
         addUpdateChoiceDescriptionLink(sceneId, sceneDto);
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).getTemplate())
-                .withRel("templateForAddScene")
-                .withType(HttpMethod.GET.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).addScene(sceneId, null))
-                .withRel("addNextScene")
-                .withType(HttpMethod.POST.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).getDescriptionTemplate())
-                .withRel("templateDescription")
-                .withType(HttpMethod.GET.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).updateSceneDescription(sceneId, null))
-                .withRel("changeDescription")
-                .withType(HttpMethod.PUT.name()));
-
-        sceneDto.add(WebMvcLinkBuilder.linkTo(
-                        WebMvcLinkBuilder
-                                .methodOn(SceneController.class).deleteScene(sceneId))
-                .withRel("deleteScene")
-                .withType(HttpMethod.DELETE.name()));
-
-        if(updatedScene.getPreviousSceneId() != null){
-            sceneDto.add(WebMvcLinkBuilder.linkTo(
-                            WebMvcLinkBuilder
-                                    .methodOn(SceneController.class).getScene(updatedScene.getPreviousSceneId()))
-                    .withRel("previousScene")
-                    .withType(HttpMethod.GET.name())
-            );
-        }
 
         return ResponseEntity.ok(sceneDto);
     }
@@ -230,15 +93,56 @@ public class SceneController {
         return ResponseEntity.ok(messageDto);
     }
 
+    private static void addActionLinks(String sceneId, SceneDto sceneDto) throws BadOwnerStoryException {
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).addScene(sceneId, null))
+                .withRel(LinkType.ADD_SCENE.REL)
+                .withType(LinkType.ADD_SCENE.METHOD.name()));
+
+        sceneDto.addDocumentation(LinkType.ADD_SCENE);
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).updateSceneDescription(sceneId, null))
+                .withRel(LinkType.UPDATE_DESCRIPTION.REL)
+                .withType(LinkType.UPDATE_DESCRIPTION.METHOD.name()));
+
+        sceneDto.addDocumentation(LinkType.UPDATE_DESCRIPTION);
+
+        sceneDto.add(WebMvcLinkBuilder.linkTo(
+                        WebMvcLinkBuilder
+                                .methodOn(SceneController.class).deleteScene(sceneId))
+                .withRel(LinkType.DELETE_SCENE.REL)
+                .withType(LinkType.DELETE_SCENE.name()));
+
+        sceneDto.addDocumentation(LinkType.DELETE_SCENE);
+    }
+
+    private static void addPreviousSceneLink(SceneDto sceneDto, Scene scene) throws BadOwnerStoryException {
+        if(scene.getPreviousSceneId() != null){
+            sceneDto.add(WebMvcLinkBuilder.linkTo(
+                            WebMvcLinkBuilder
+                                    .methodOn(SceneController.class).getScene(scene.getPreviousSceneId()))
+                    .withRel(LinkType.PREVIOUS_SCENE.REL)
+                    .withType(LinkType.PREVIOUS_SCENE.METHOD.name())
+            );
+
+            sceneDto.addDocumentation(LinkType.PREVIOUS_SCENE);
+        }
+    }
+
     private static void addNextSceneLink(SceneDto sceneDto) throws BadOwnerStoryException {
         for(Choice choice: sceneDto.getChoices()){
             sceneDto.add(
                     WebMvcLinkBuilder
                             .linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).getScene(choice.getNextSceneId()))
-                            .withRel("nextScene")
-                            .withTitle(choice.getDescription())
-                            .withType(HttpMethod.GET.name())
+                            .withRel(LinkType.NEXT_SCENE.REL)
+                            .withTitle(LinkType.NEXT_SCENE.TITLE)
+                            .withType(LinkType.NEXT_SCENE.METHOD.name())
             );
+            sceneDto.addDocumentation(LinkType.NEXT_SCENE);
+
         }
     }
 
@@ -247,10 +151,12 @@ public class SceneController {
             sceneDto.add(
                     WebMvcLinkBuilder
                             .linkTo(WebMvcLinkBuilder.methodOn(SceneController.class).updateChoiceDescription(sceneId, choice.getNextSceneId(), null))
-                            .withRel("updateChoiceDescription")
+                            .withRel(LinkType.UPDATE_CHOICE.REL)
                             .withTitle(choice.getDescription())
-                            .withType(HttpMethod.GET.name())
+                            .withType(LinkType.UPDATE_CHOICE.METHOD.name())
             );
+
+            sceneDto.addDocumentation(LinkType.UPDATE_CHOICE);
         }
     }
 

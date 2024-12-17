@@ -1,8 +1,8 @@
 package fr.nelson.you_are_the_hero.model.dto.message;
 
-import org.springframework.hateoas.RepresentationModel;
+import fr.nelson.you_are_the_hero.model.dto.AbstractHateoasDto;
 
-public class MessageDto extends RepresentationModel<MessageDto> {
+public class MessageDto extends AbstractHateoasDto<MessageDto> {
     private String message;
 
     public MessageDto() {

@@ -1,11 +1,10 @@
 package fr.nelson.you_are_the_hero.model.dto;
 
 import fr.nelson.you_are_the_hero.model.Choice;
-import org.springframework.hateoas.RepresentationModel;
 
 import java.util.List;
 
-public class SceneDto extends RepresentationModel<SceneDto> {
+public class SceneDto extends AbstractHateoasDto<SceneDto> {
     private String description;
     private List<Choice> choices;
 

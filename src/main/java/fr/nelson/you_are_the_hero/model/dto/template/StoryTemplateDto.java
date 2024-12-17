@@ -1,8 +1,6 @@
 package fr.nelson.you_are_the_hero.model.dto.template;
 
-import org.springframework.hateoas.RepresentationModel;
-
-public class StoryTemplateDto extends RepresentationModel<StoryTemplateDto> {
+public class StoryTemplateDto extends TemplateDTO<StoryTemplateDto> {
     private String title;
     private String description;
 
@@ -25,5 +23,13 @@ public class StoryTemplateDto extends RepresentationModel<StoryTemplateDto> {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }
