@@ -1,5 +1,6 @@
 package fr.nelson.you_are_the_hero.controller;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.nelson.you_are_the_hero.exception.BadOwnerStoryException;
 import fr.nelson.you_are_the_hero.exception.SceneAlreadyExistsException;
 import fr.nelson.you_are_the_hero.exception.StoryNotFoundException;
@@ -10,6 +11,7 @@ import fr.nelson.you_are_the_hero.model.db.Story;
 import fr.nelson.you_are_the_hero.model.hateoas.LinkType;
 import fr.nelson.you_are_the_hero.service.StoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -28,19 +30,29 @@ public class StoryController {
     StoryService storyService;
 
     @GetMapping
-    public ResponseEntity<List<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
+    public ResponseEntity<CollectionModel<StoryDto>> getAllStory() throws StoryNotFoundException, SceneAlreadyExistsException, BadOwnerStoryException {
         List<Story> allStory = storyService.getAllStory();
         List<StoryDto> storyDtoList = new ArrayList<>();
         for(Story story: allStory){
             StoryDto storyDto = new StoryDto(story.getTitle(), story.getDescription());
             if(story.getFirstSceneId() != null) {
-                storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).play(story.getFirstSceneId())).withRel("startStory").withType(HttpMethod.GET.name()));
+                storyDto.add(
+                        WebMvcLinkBuilder.linkTo(
+                                WebMvcLinkBuilder
+                                        .methodOn(GameController.class)
+                                        .play(story.getFirstSceneId()))
+                                .withRel(LinkType.START_STORY.REL)
+                                .withType(LinkType.START_STORY.METHOD.name()));
+                storyDto.addDocumentation(LinkType.START_STORY);
             } else {
                 storyDto.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StoryController.class).addFirstSceneToStory(story.getId(), null, null)).withRel("addFirstScene").withType(HttpMethod.POST.name()));
             }
             storyDtoList.add(storyDto);
         }
-        return ResponseEntity.ok(storyDtoList);
+
+        CollectionModel<StoryDto> storyCollection = CollectionModel.of(storyDtoList);
+
+        return ResponseEntity.ok(storyCollection);
     }
 
     @GetMapping(path = "/{storyId}")

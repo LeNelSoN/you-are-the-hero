@@ -3,6 +3,7 @@ package fr.nelson.you_are_the_hero.controller;
 import fr.nelson.you_are_the_hero.model.dto.GameDto;
 import fr.nelson.you_are_the_hero.model.Choice;
 import fr.nelson.you_are_the_hero.model.db.Scene;
+import fr.nelson.you_are_the_hero.model.hateoas.LinkType;
 import fr.nelson.you_are_the_hero.service.SceneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -30,9 +31,10 @@ public class GameController {
                     WebMvcLinkBuilder
                             .methodOn(GameController.class)
                             .play(choice.getNextSceneId()))
-                    .withRel("next")
+                    .withRel(LinkType.NEXT_GAME_SCENE.REL)
                     .withTitle(choice.getDescription())
-                    .withType(HttpMethod.GET.name()));
+                    .withType(LinkType.NEXT_GAME_SCENE.METHOD.name()));
+            gameDto.addDocumentation(LinkType.NEXT_GAME_SCENE);
         }
 
         return ResponseEntity.ok(gameDto);

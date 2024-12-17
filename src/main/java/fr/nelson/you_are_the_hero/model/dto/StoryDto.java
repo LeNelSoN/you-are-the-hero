@@ -1,8 +1,9 @@
 package fr.nelson.you_are_the_hero.model.dto;
 
-import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
-public class StoryDto extends RepresentationModel<StoryDto> {
+@Relation(collectionRelation = "stories")
+public class StoryDto extends AbstractHateoasDto<StoryDto> {
     private String title;
     private String description;
 

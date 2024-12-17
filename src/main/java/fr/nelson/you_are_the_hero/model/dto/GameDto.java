@@ -1,8 +1,6 @@
 package fr.nelson.you_are_the_hero.model.dto;
 
-import org.springframework.hateoas.RepresentationModel;
-
-public class GameDto extends RepresentationModel<SceneDto> {
+public class GameDto extends AbstractHateoasDto<SceneDto> {
     private String description;
 
     public GameDto(String description) {
